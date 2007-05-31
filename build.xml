@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<!--
+        Practice Cytoscape Plugin Build Script
+        Author:  Michael Matan
+-->
+
+<project name="GOSlimmer" default="compile" basedir=".">
+
+  
+
+    <property name="src.dir" value="${basedir}/src/"/>
+    <property name="build.dir" value="${basedir}/build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="jar.dir" value="${build.dir}/jar"/>
+    <property name="jar.file" value="${jar.dir}/ThemeMapper.jar"/>
+    <property name="plugins.dir" value="${basedir}/plugins/"/>
+
+    <!-- third party dependency library directory -->
+    <property name="lib.dir" value="${basedir}/lib"/>
+
+    <!-- ==================== Compilation Classpath ====================== -->
+    <path id="compile.classpath">
+        <pathelement path="${build.dir}/WEB-INF/classes"/>
+        <fileset dir="${lib.dir}">
+            <include name="*.jar"/>
+        </fileset>
+        <fileset dir="${plugins.dir}">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+
+
+    <target name="prepare">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${jar.dir}"/>
+        <mkdir dir="${plugins.dir}"/>
+    </target>
+
+    <target name="compile" depends="prepare">
+        <javac srcdir="${src.dir}" destdir="${classes.dir}" >
+            <classpath refid="compile.classpath"/>
+        </javac>
+    	<!-- Copy resources to build directory -->
+    	<copy todir="${classes.dir}">
+    		<fileset dir="${src.dir}" includes="**/*.properties **/*.gif" excludes="**/*.java"/>
+    	</copy>
+    </target>
+
+    <target name="jar" depends="compile">
+        <jar basedir="${classes.dir}" destfile="${jar.file}"  manifest="${basedir}/config/MANIFEST.MF"/>
+    </target>
+
+    <target name="plugins" depends="jar">
+        <copy file="${jar.file}" todir="${plugins.dir}"/>
+    </target>
+
+
+</project>

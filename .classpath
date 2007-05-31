@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/xercesImpl.jar"/>
+	<classpathentry kind="lib" path="lib/wizard.jar"/>
+	<classpathentry kind="lib" path="lib/violinstrings-1.0.2.jar"/>
+	<classpathentry kind="lib" path="lib/tclib.jar"/>
+	<classpathentry kind="lib" path="lib/swing-layout-1.0.1.jar"/>
+	<classpathentry kind="lib" path="lib/piccolox.jar"/>
+	<classpathentry kind="lib" path="lib/piccolo.jar"/>
+	<classpathentry kind="lib" path="lib/phoebe.jar"/>
+	<classpathentry kind="lib" path="lib/looks-1.1.3.jar"/>
+	<classpathentry kind="lib" path="lib/junit.jar"/>
+	<classpathentry kind="lib" path="lib/jsr173_1.0_api.jar"/>
+	<classpathentry kind="lib" path="lib/jnlp.jar"/>
+	<classpathentry kind="lib" path="lib/jhall.jar"/>
+	<classpathentry kind="lib" path="lib/jdom.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-impl.jar"/>
+	<classpathentry kind="lib" path="lib/jaxb-api.jar" sourcepath="/usr/local/lib/jaxb-ri-20070125/lib/jaxb-api-src.zip"/>
+	<classpathentry kind="lib" path="lib/glf.jar"/>
+	<classpathentry kind="lib" path="lib/giny.jar" sourcepath="/Users/mikematan/lib/giny/giny-1.1-src/giny/src"/>
+	<classpathentry kind="lib" path="lib/freehep-graphicsio.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphicsio-swf.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphicsio-svg.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphicsio-ps.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphicsio-pdf.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphicsio-gif.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-graphics2d.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-base.jar"/>
+	<classpathentry kind="lib" path="lib/fing.jar"/>
+	<classpathentry kind="lib" path="lib/ding.jar" sourcepath="/Users/mikematan/lib/ding/2.4/src"/>
+	<classpathentry kind="lib" path="lib/cytoscape.jar" sourcepath="/Users/mikematan/lib/cytoscape/2.4/src"/>
+	<classpathentry kind="lib" path="lib/cytoscape-util-intr.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-task.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-render-stateful.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-render-immed.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-render-export.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-graph-fixed.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-graph-dynamic.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-geom-spacial.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-geom-rtree.jar"/>
+	<classpathentry kind="lib" path="lib/cytoscape-cruft-obo.jar"/>
+	<classpathentry kind="lib" path="lib/concurrent.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.x-cytoscape-custom.jar"/>
+	<classpathentry kind="lib" path="lib/com-nerius-math-xform.jar"/>
+	<classpathentry kind="lib" path="lib/coltginy.jar"/>
+	<classpathentry kind="lib" path="lib/colt.jar"/>
+	<classpathentry kind="lib" path="lib/biojava-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/activation.jar"/>
+	<classpathentry kind="lib" path="plugins/TableImport.jar" sourcepath="/Users/mikematan/lib/cytoscape-tableimport/2.4/src"/>
+	<classpathentry kind="lib" path="plugins/linkout.jar" sourcepath="/Users/mikematan/lib/linkout/src"/>
+	<classpathentry kind="lib" path="plugins/yLayouts.jar"/>
+	<classpathentry kind="lib" path="plugins/AutomaticLayout.jar" sourcepath="/Users/mikematan/lib/automaticLayout/cyto2.4/src"/>
+	<classpathentry kind="lib" path="plugins/ThemeMapper.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

@@ -1,0 +1,4 @@
+the plugins directory needs to contain the same jars in the distro's plugin directory in order to access the layout options and the gene ontology server option.
+
+In the current implementation, expanding a node will only expand it up to the point of the last collapsed node;  ie, expanding a parent will not expand collapsed children.
+	-above described behaviour has now been eliminated
