@@ -3,7 +3,6 @@ package org.ccbr.bader.yeast;
 import giny.model.Edge;
 import giny.model.Node;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -11,12 +10,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import csplugins.layout.algorithms.hierarchicalLayout.HierarchicalLayoutListener;
+import csplugins.layout.algorithms.graphPartition.AttributeCircleLayout;
 import cytoscape.CyNetwork;
-
 import cytoscape.Cytoscape;
 import cytoscape.data.CyAttributes;
 import cytoscape.data.Semantics;
 import cytoscape.view.CyNetworkView;
+import cytoscape.visual.VisualMappingManager;
 
 public class ThematicMapFunctionPrototype {
 
@@ -24,6 +25,11 @@ public class ThematicMapFunctionPrototype {
 		// TODO Auto-generated constructor stub
 	}
 	
+	/**Creates a new CyNetwork based on the current CyNetwork, using the values of the given themeAttributeName parameter for the nodes 
+	 * of the graph as the themes (to which the nodes belong in the theme graph)
+	 * 
+	 * @param themeAttributeName the attribute on which the thematic map is to be created
+	 */
 	public static void createThematicMap(String themeAttributeName) {
 		CyNetwork inputNetwork = Cytoscape.getCurrentNetwork();
 		CyNetwork thematicMap = Cytoscape.createNetwork(inputNetwork.getTitle() + "_thematic_map");
@@ -101,6 +107,21 @@ public class ThematicMapFunctionPrototype {
 		//finally, generate the graph view
 		CyNetworkView themaView = Cytoscape.createNetworkView(thema);
 		
+		VisualMappingManager vmm = Cytoscape.getVisualMappingManager();
+        if (!vmm.getCalculatorCatalog().getVisualStyleNames().contains("ThemeMapVS")) {
+            vmm.getCalculatorCatalog().addVisualStyle(new ThemeMapVisualStyle(vmm.getVisualStyle(),"ThemeMapVS"));
+        }
+		vmm.setVisualStyle("ThemeMapVS");
+		themaView.redrawGraph(false, false);
+		//HierarchicalLayoutListener hll = new HierarchicalLayoutListener();
+		AttributeCircleLayout all = new AttributeCircleLayout(thema,Cytoscape.getNodeAttributes(),themeAttributeName);
+		all.layout();
+		themaView.redrawGraph(true, false);
+		//hll will execute the layout algorithm on the currently selected view, which should be our newly created one
+		//hll.actionPerformed(null);
+		
+		
+		//TODO consider creating 'relationship edges', ie edges between theme nodes which have member input nodes in common;  see: http://www.cgl.ucsf.edu/Research/cytoscape/groupAPI/doc/edu/ucsf/groups/GroupManager.html#regroupGroup(cytoscape.CyNode,%20boolean,%20boolean)
 		
 	}
 	
@@ -150,21 +171,48 @@ public class ThematicMapFunctionPrototype {
 		//if there are no source nor target themes for the nodes, their won't be any connections in the theme graph, so ignore
 		if (sourceNodeThemes == null || targetNodeThemes == null) return;
 		
-		for(String sourceNodeTheme: sourceNodeThemes) {
+//		for(String sourceNodeTheme: sourceNodeThemes) {
+//			for(String targetNodeTheme:targetNodeThemes) {
+//				if (sourceNodeTheme != targetNodeTheme) {
+//					//create edge between theme nodes
+//					Node sourceThemeNode = Cytoscape.getCyNode(sourceNodeTheme);
+//					Node targetThemeNode = Cytoscape.getCyNode(targetNodeTheme);
+//					//name the edge after the input edge's source and target nodes
+//					String themeEdgeAttributeVal = source.getIdentifier() + "-" + target.getIdentifier();
+//					Edge themeEdge = Cytoscape.getCyEdge(sourceThemeNode,targetThemeNode,Semantics.INTERACTION,themeEdgeAttributeVal,true,true);
+//					//consider adding this edge to a map, possibly mapping input edge nodes to their list of corresponding theme edges
+//					thema.addEdge(themeEdge);
+//				}
+//			}
+//		}
+		
+		final String themeEdgeAliasVal = "tt";  //for theme-theme
+		//maps input edges to the theme edges which they imply
+		Map<Edge,Set<Edge>> inputEdgeToThemeEdges = new HashMap<Edge, Set<Edge>>();
+		for(String sourceNodeTheme:sourceNodeThemes) {
 			for(String targetNodeTheme:targetNodeThemes) {
 				if (sourceNodeTheme != targetNodeTheme) {
-					//create edge between theme nodes
+					//create edge between theme nodes if it doesn't already exist
 					Node sourceThemeNode = Cytoscape.getCyNode(sourceNodeTheme);
 					Node targetThemeNode = Cytoscape.getCyNode(targetNodeTheme);
-					//name the edge after the input edge's source and target nodes
+					Edge themeEdge = Cytoscape.getCyEdge(sourceThemeNode,targetThemeNode,Semantics.INTERACTION,themeEdgeAliasVal,true,true);
+					
+					//recording the input edge's source and target nodes as an attribute of the theme edge
 					String themeEdgeAttributeVal = source.getIdentifier() + "-" + target.getIdentifier();
-					Edge themeEdge = Cytoscape.getCyEdge(sourceThemeNode,targetThemeNode,Semantics.INTERACTION,themeEdgeAttributeVal,true,true);
-					//consider adding this edge to a map, possibly mapping input edge nodes to their list of corresponding theme edges
+					TMUtil.addToListAttribute(themeEdge, TM.edgeSourceAttName, themeEdgeAttributeVal);
+					
 					thema.addEdge(themeEdge);
+					
+					//add new theme edge entry to the set of theme edges which this input edge corresponds to
+					Set<Edge> themeEdges = inputEdgeToThemeEdges.get(inputEdge);
+					if (themeEdges == null) { 
+						themeEdges = new HashSet<Edge>();
+						inputEdgeToThemeEdges.put(inputEdge, themeEdges);
+					}
+					themeEdges.add(themeEdge);
 				}
 			}
 		}
-		
 	}
 
 	/**Modifies the passed map so that the Set which the Map maps the node's ID to contains the theme parameter.
