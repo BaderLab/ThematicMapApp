@@ -31,11 +31,12 @@ public class ThematicMapPlugin extends CytoscapePlugin
         //add the start goslimmer option
         item = new JMenuItem("Start ThematicMap");
         item.addActionListener(actionListener);
-        submenu.add(item);
+        //submenu.add(item);
         //add the exit goslimmer option
         item = new JMenuItem("Exit ThematicMap");
         item.addActionListener(actionListener);
-        submenu.add(item);
+        //submenu.add(item);
+        submenu.add(new ThematicMapMenu());
         menu.add(submenu);
     }
 
