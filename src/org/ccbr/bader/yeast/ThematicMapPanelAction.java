@@ -10,6 +10,7 @@ import javax.swing.SwingConstants;
 
 import cytoscape.CyNetwork;
 import cytoscape.Cytoscape;
+import cytoscape.view.CyNetworkView;
 import cytoscape.view.CytoscapeDesktop;
 import cytoscape.view.cytopanels.CytoPanel;
 import cytoscape.view.cytopanels.CytoPanelState;
@@ -35,7 +36,9 @@ public class ThematicMapPanelAction implements ActionListener {
 	
 	public void actionPerformed(ActionEvent event) {
 		//ThematicMapFunctionPrototype.createThematicMap("canonicalName");
-		ThematicMapFunctionPrototype.createThematicMap("annotation.GO BIOLOGICAL_PROCESS");
+		String themeAttributeName = "annotation.GO BIOLOGICAL_PROCESS";
+		CyNetwork thematicMap = ThematicMapFunctionPrototype.createThematicMap(themeAttributeName);
+		CyNetworkView thematicMapV = ThematicMapFunctionPrototype.createThematicMapDefaultView(thematicMap,themeAttributeName);
 //		display ThematicMap Main Panel in left cytopanel
 		CytoscapeDesktop desktop = Cytoscape.getDesktop();
 		CytoPanel cytoPanel = desktop.getCytoPanel(SwingConstants.WEST);
