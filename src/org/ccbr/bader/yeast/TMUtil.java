@@ -91,5 +91,16 @@ public class TMUtil {
 		if (themeMembers == null) return 0;
 		return themeMembers.size();
 	}
+
+	public static Node createSumThemeNode(Node node1, Node node2) {
+		int mergedId = Cytoscape.getRootGraph().createNode();
+		Node merged = Cytoscape.getRootGraph().getNode(mergedId);
+		//TODO merge attributes
+		return merged;
+	}
+
+	public static void setNodeIntAttribute(Node node, String attributeName, int value) {
+		nodeAtt.setAttribute(node.getIdentifier(), attributeName, value);
+	}
 	
 }
