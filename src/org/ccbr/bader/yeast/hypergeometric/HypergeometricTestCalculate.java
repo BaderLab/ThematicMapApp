@@ -127,8 +127,8 @@ public class HypergeometricTestCalculate implements CalculateTestTask {
         HypergeometricDistribution hd;
         hypergeometricTestMap = new HashMap();
 
-        HashSet set = new HashSet(mapSmallX.keySet());
-        Iterator iterator = set.iterator();
+        HashSet nodeIdSet = new HashSet(mapSmallX.keySet());
+        Iterator iterator = nodeIdSet.iterator();
         Integer id;
         Integer smallXvalue;
         Integer smallNvalue;
