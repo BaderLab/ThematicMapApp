@@ -102,5 +102,12 @@ public class TMUtil {
 	public static void setNodeIntAttribute(Node node, String attributeName, int value) {
 		nodeAtt.setAttribute(node.getIdentifier(), attributeName, value);
 	}
+
+	public static int getNumThemeMembers(Edge themeEdge) {
+		List<String> themeMembers = edgeAtt.getListAttribute(themeEdge.getIdentifier(), TM.edgeSourceAttName);
+		if (themeMembers == null) return 0;
+		return themeMembers.size();
+		
+	}
 	
 }
