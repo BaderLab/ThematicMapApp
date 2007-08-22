@@ -1,3 +1,36 @@
+/**
+ * * Copyright (c) 2007 Bader Lab, Donnelly Centre for Cellular and Biomolecular 
+ * * Research, University of Toronto
+ * *
+ * * Code written by: Michael Matan
+ * * Authors: Michael Matan, Gary D. Bader
+ * *
+ * * This library is free software; you can redistribute it and/or modify it
+ * * under the terms of the GNU Lesser General Public License as published
+ * * by the Free Software Foundation; either version 2.1 of the License, or
+ * * any later version.
+ * *
+ * * This library is distributed in the hope that it will be useful, but
+ * * WITHOUT ANY WARRANTY, WITHOUT EVEN THE IMPLIED WARRANTY OF
+ * * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  The software and
+ * * documentation provided hereunder is on an "as is" basis, and
+ * * University of Toronto
+ * * has no obligations to provide maintenance, support,
+ * * updates, enhancements or modifications.  In no event shall the
+ * * University of Toronto
+ * * be liable to any party for direct, indirect, special,
+ * * incidental or consequential damages, including lost profits, arising
+ * * out of the use of this software and its documentation, even if
+ * * University of Toronto
+ * * has been advised of the possibility of such damage.  See
+ * * the GNU Lesser General Public License for more details.
+ * *
+ * * You should have received a copy of the GNU Lesser General Public License
+ * * along with this library; if not, write to the Free Software Foundation,
+ * * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+ * *
+ * * Description: Visual Style class for Thematic Map networks   
+ */
 package org.ccbr.bader.yeast;
 
 import java.awt.Color;
@@ -62,15 +95,26 @@ public class ThemeMapVisualStyle extends VisualStyle {
 
 		@Override
 		public void calculateEdgeAppearance(EdgeAppearance appr, Edge edge, CyNetwork network) {
-			// TODO Auto-generated method stub
 			super.calculateEdgeAppearance(appr, edge, network);
+			this.modifyEdgeAppearance(appr,edge,network);
 		}
 		
 		private void modifyEdgeAppearance(EdgeAppearance appr, Edge edge, CyNetwork network) {
-			this.modifyEdgeAppearance(appr, edge, network);
-			//appr.setLineType(LineType.LINE_3);
+//			this.modifyEdgeAppearance(appr, edge, network);
+			Color edgeColor = calculateEdgeColorFromHGTestResult(edge);
+			appr.setColor(edgeColor);
 			appr.applyBypass(edge);
 			return;
+		}
+
+		private Color calculateEdgeColorFromHGTestResult(Edge edge) {
+			double hgtp = TMUtil.getHGTResult(edge);
+			int redComponent = (int) (hgtp * (double) 255);
+			int blueComponent = (int) (255- (int) (hgtp * (double) 255));
+//			int greenComponent = (int) (255- (int) (hgtp * (double) 255));
+			int greenComponent = 127;
+			Color edgeColor = new Color(redComponent,greenComponent,blueComponent);
+			return edgeColor;
 		}
 		
 	}

@@ -1,3 +1,36 @@
+/**
+ * * Copyright (c) 2007 Bader Lab, Donnelly Centre for Cellular and Biomolecular 
+ * * Research, University of Toronto
+ * *
+ * * Code written by: Michael Matan
+ * * Authors: Michael Matan, Gary D. Bader
+ * *
+ * * This library is free software; you can redistribute it and/or modify it
+ * * under the terms of the GNU Lesser General Public License as published
+ * * by the Free Software Foundation; either version 2.1 of the License, or
+ * * any later version.
+ * *
+ * * This library is distributed in the hope that it will be useful, but
+ * * WITHOUT ANY WARRANTY, WITHOUT EVEN THE IMPLIED WARRANTY OF
+ * * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.  The software and
+ * * documentation provided hereunder is on an "as is" basis, and
+ * * University of Toronto
+ * * has no obligations to provide maintenance, support,
+ * * updates, enhancements or modifications.  In no event shall the
+ * * University of Toronto
+ * * be liable to any party for direct, indirect, special,
+ * * incidental or consequential damages, including lost profits, arising
+ * * out of the use of this software and its documentation, even if
+ * * University of Toronto
+ * * has been advised of the possibility of such damage.  See
+ * * the GNU Lesser General Public License for more details.
+ * *
+ * * You should have received a copy of the GNU Lesser General Public License
+ * * along with this library; if not, write to the Free Software Foundation,
+ * * Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+ * *
+ * * Description: Prototype class encapsulating various methods for creating thematic maps in cytoscape
+ */
 package org.ccbr.bader.yeast;
 
 import giny.model.Edge;
@@ -125,6 +158,84 @@ public class ThematicMapFunctionPrototype {
 		}
 
 		
+		Map mapSmallN = null;
+		Map mapSmallX = null;
+		int bigN = 0, bigX = 0;
+		//iterate through the theme network and generate the input parameters to the hypergeometric test
+		/*
+		 * Pr(k=x) = f(k;N,D,n) = (D choose k)*((N-D) choose (n-k))/(N choose n)
+		 * where N is the total number of objects, D is the total number of defective objects, n is the size of the sample of N (n draws without replacement), and k is the number 
+		 * of object in the sample of n which are defective.  f(k;N,D,n) is the probability of finding k defective objects in the sample of n 
+		 * 
+		 * parameters to work with:  number of input nodes, number of input nodes belonging to theme t, number of themes, number of  nodes selected (from input)
+		 * if whole network is being analysed, the number of nodes selected is the number of input nodes which belong to the selected theme nodes
+		 * 
+		 * ie, n = number of input nodes belonging to  selected theme nodes (cardinality of that set, duplicates are not counted)
+		 * k = number of nodes belonging to a particular theme
+		 * N is the number of theme nodes (or is it the number of input nodes?)
+		 * 
+		 * to generate k:  count the edges between theme nodes
+		 * to generate n:  count all the edges between all theme nodes
+		 * to generate N:  count all possible edges between theme nodes (ie, as though all
+		 * input nodes had a connection to each other in the input graph)
+		 * to generate D:  take the graph generated in the last step, and count the number of edges which are between the theme nodes of interest; alternatively, just maximally connect the two theme nodes of interest, and count those edges.
+		 * 
+		 */
+//		Iterator<Edge> themeEdgeI = thema.edgesIterator();
+//		Map<Edge, Integer> edgeToK = new HashMap<Edge, Integer>();
+//		Map<Edge,Integer> edgeToD = new HashMap<Edge, Integer>();
+//		int n = 0;
+//		int N = 0;
+//		while(themeEdgeI.hasNext()) {
+//			Edge themeEdge = themeEdgeI.next();
+//			int themeEdgeMemberCount /*k*/ = TMUtil.getNumThemeMembers(themeEdge);
+//			edgeToK.put(themeEdge, themeEdgeMemberCount);
+//			n+= themeEdgeMemberCount;
+//			
+//			//calculate D for this specific theme edge type;  TODO verify this is the correct formula
+//			Node sourceThemeNode = themeEdge.getSource();
+//			Node targetThemeNode = themeEdge.getTarget();
+//			int sourceThemeNodeMemberCount = TMUtil.getNumThemeMembers(sourceThemeNode);
+//			int targetThemeNodeMemberCount = TMUtil.getNumThemeMembers(targetThemeNode);
+//			int D = sourceThemeNodeMemberCount * targetThemeNodeMemberCount;
+//			edgeToD.put(themeEdge, D);
+//			N+=D;
+//		}
+		Iterator<Edge> themeEdgeI = thema.edgesIterator();
+		Map<Integer, Integer> edgeToK = new HashMap<Integer, Integer>();
+		Map<Integer,Integer> edgeToD = new HashMap<Integer, Integer>();
+		int n = 0;
+		int N = 0;
+		while(themeEdgeI.hasNext()) {
+			Edge themeEdge = themeEdgeI.next();
+			int themeEdgeMemberCount /*k*/ = TMUtil.getNumThemeMembers(themeEdge);
+			edgeToK.put(themeEdge.getRootGraphIndex(), themeEdgeMemberCount);
+			n+= themeEdgeMemberCount;
+			
+			//calculate D for this specific theme edge type;  TODO verify this is the correct formula
+			Node sourceThemeNode = themeEdge.getSource();
+			Node targetThemeNode = themeEdge.getTarget();
+			int sourceThemeNodeMemberCount = TMUtil.getNumThemeMembers(sourceThemeNode);
+			int targetThemeNodeMemberCount = TMUtil.getNumThemeMembers(targetThemeNode);
+			int D = sourceThemeNodeMemberCount * targetThemeNodeMemberCount;
+			edgeToD.put(themeEdge.getRootGraphIndex(), D);
+			N+=D;
+		}
+		
+//		Map<Edge,>
+//		DistributionCount distCount = new DistributionCount(null,null,null,null,null);
+//		HypergeometricTestCalculate test = new HypergeometricTestCalculate(mapSmallN,mapSmallX,bigN,bigX);
+		HypergeometricTestCalculate test = new HypergeometricTestCalculate(edgeToK,edgeToD,n,N);
+//		HypergeometricTestCalculate test = new HypergeometricTestCalculate(edgeToK,edgeToD,N,n);
+		test.calculate();
+		//map from edge ID to String representation of the double probability value
+		Map<Integer,String> testMap = test.getTestMap();
+		//iterate through the edges and assign the result of the hypergeometric test for that edge's significance as an edge attribute
+		for(Integer edgeId:testMap.keySet()) {
+			double hdtResult = Double.valueOf(testMap.get(edgeId));
+			TMUtil.setEdgeDoubleAttr(thema.getEdge(edgeId),TM.edgeHGTResult,hdtResult);
+		}
+		
 		
 		//TODO consider creating 'relationship edges', ie edges between theme nodes which have member input nodes in common;  see: http://www.cgl.ucsf.edu/Research/cytoscape/groupAPI/doc/edu/ucsf/groups/GroupManager.html#regroupGroup(cytoscape.CyNode,%20boolean,%20boolean)
 		return thema;
@@ -234,76 +345,8 @@ public class ThematicMapFunctionPrototype {
 		}
 		
 		
-		Map mapSmallN = null;
-		Map mapSmallX = null;
-		int bigN = 0, bigX = 0;
-		//iterate through the theme network and generate the input parameters to the hypergeometric test
-		/*
-		 * Pr(k=x) = f(k;N,D,n) = (D choose k)*((N-D) choose (n-k))/(N choose n)
-		 * where N is the total number of objects, D is the total number of defective objects, n is the size of the sample of N (n draws without replacement), and k is the number 
-		 * of object in the sample of n which are defective.  f(k;N,D,n) is the probability of finding k defective objects in the sample of n 
-		 * 
-		 * parameters to work with:  number of input nodes, number of input nodes belonging to theme t, number of themes, number of  nodes selected (from input)
-		 * if whole network is being analysed, the number of nodes selected is the number of input nodes which belong to the selected theme nodes
-		 * 
-		 * ie, n = number of input nodes belonging to  selected theme nodes (cardinality of that set, duplicates are not counted)
-		 * k = number of nodes belonging to a particular theme
-		 * N is the number of theme nodes (or is it the number of input nodes?)
-		 * 
-		 * to generate k:  count the edges between theme nodes
-		 * to generate n:  count all the edges between all theme nodes
-		 * to generate N:  count all possible edges between theme nodes (ie, as though all
-		 * input nodes had a connection to each other in the input graph)
-		 * to generate D:  take the graph generated in the last step, and count the number of edges which are between the theme nodes of interest; alternatively, just maximally connect the two theme nodes of interest, and count those edges.
-		 * 
-		 */
-//		Iterator<Edge> themeEdgeI = thema.edgesIterator();
-//		Map<Edge, Integer> edgeToK = new HashMap<Edge, Integer>();
-//		Map<Edge,Integer> edgeToD = new HashMap<Edge, Integer>();
-//		int n = 0;
-//		int N = 0;
-//		while(themeEdgeI.hasNext()) {
-//			Edge themeEdge = themeEdgeI.next();
-//			int themeEdgeMemberCount /*k*/ = TMUtil.getNumThemeMembers(themeEdge);
-//			edgeToK.put(themeEdge, themeEdgeMemberCount);
-//			n+= themeEdgeMemberCount;
-//			
-//			//calculate D for this specific theme edge type;  TODO verify this is the correct formula
-//			Node sourceThemeNode = themeEdge.getSource();
-//			Node targetThemeNode = themeEdge.getTarget();
-//			int sourceThemeNodeMemberCount = TMUtil.getNumThemeMembers(sourceThemeNode);
-//			int targetThemeNodeMemberCount = TMUtil.getNumThemeMembers(targetThemeNode);
-//			int D = sourceThemeNodeMemberCount * targetThemeNodeMemberCount;
-//			edgeToD.put(themeEdge, D);
-//			N+=D;
-//		}
-		Iterator<Edge> themeEdgeI = thema.edgesIterator();
-		Map<Integer, Integer> edgeToK = new HashMap<Integer, Integer>();
-		Map<Integer,Integer> edgeToD = new HashMap<Integer, Integer>();
-		int n = 0;
-		int N = 0;
-		while(themeEdgeI.hasNext()) {
-			Edge themeEdge = themeEdgeI.next();
-			int themeEdgeMemberCount /*k*/ = TMUtil.getNumThemeMembers(themeEdge);
-			edgeToK.put(themeEdge.getRootGraphIndex(), themeEdgeMemberCount);
-			n+= themeEdgeMemberCount;
-			
-			//calculate D for this specific theme edge type;  TODO verify this is the correct formula
-			Node sourceThemeNode = themeEdge.getSource();
-			Node targetThemeNode = themeEdge.getTarget();
-			int sourceThemeNodeMemberCount = TMUtil.getNumThemeMembers(sourceThemeNode);
-			int targetThemeNodeMemberCount = TMUtil.getNumThemeMembers(targetThemeNode);
-			int D = sourceThemeNodeMemberCount * targetThemeNodeMemberCount;
-			edgeToD.put(themeEdge.getRootGraphIndex(), D);
-			N+=D;
-		}
+
 		
-//		Map<Edge,>
-//		DistributionCount distCount = new DistributionCount(null,null,null,null,null);
-//		HypergeometricTestCalculate test = new HypergeometricTestCalculate(mapSmallN,mapSmallX,bigN,bigX);
-		HypergeometricTestCalculate test = new HypergeometricTestCalculate(edgeToK,edgeToD,n,N);
-		
-		test.calculate(); 
 	}
 
 	/**Modifies the passed map so that the Set which the Map maps the node's ID to contains the theme parameter.
@@ -365,31 +408,31 @@ public class ThematicMapFunctionPrototype {
 		ThematicMapFunctionPrototype.ontology = ontology;
 	}
 	
-	/** Create a view for the ontology corresponding to the thematic map, using the theme term ontology visual style and appropriate context menu 
-	 * items.
-	 * 
-	 */
-	public static void createOntologyView() {
-		if (ontology == null) throw new RuntimeException("Cannot create view for Null Ontology");
-		registerThemeOntologyVisualStyle();
-		VisualMappingManager vmm = Cytoscape.getVisualMappingManager();
-		vmm.setVisualStyle(themeTermOntologyVSName);
-		Cytoscape.createNetworkView(ontology,ontology.getTitle() + " - Theme Term Ontology");
-		//TODO attach appropriate context menu listeners
-		
-	}
+//	/** Create a view for the ontology corresponding to the thematic map, using the theme term ontology visual style and appropriate context menu 
+//	 * items.
+//	 * 
+//	 */
+//	public static void createOntologyView() {
+//		if (ontology == null) throw new RuntimeException("Cannot create view for Null Ontology");
+//		registerThemeOntologyVisualStyle();
+//		VisualMappingManager vmm = Cytoscape.getVisualMappingManager();
+//		vmm.setVisualStyle(themeTermOntologyVSName);
+//		Cytoscape.createNetworkView(ontology,ontology.getTitle() + " - Theme Term Ontology");
+//		//TODO attach appropriate context menu listeners
+//		
+//	}
 	
-	private static final String themeTermOntologyVSName = "ThemeTermOntologyVS";
-	
-	/** Registers an instance of ThemeTermOntologyVisualStyle with the visual mapping manager's calculator catalog under the name "ThemeTermOntologyVS",
-	 *  for later use when creating theme term ontology network views.
-	 * 
-	 */
-	private static void registerThemeOntologyVisualStyle() {
-		VisualMappingManager vmm = Cytoscape.getVisualMappingManager();
-        if (!vmm.getCalculatorCatalog().getVisualStyleNames().contains(themeTermOntologyVSName)) {
-            vmm.getCalculatorCatalog().addVisualStyle(new ThemeTermOntologyVisualStyle(vmm.getVisualStyle(),themeTermOntologyVSName));
-        }
-	}
+//	private static final String themeTermOntologyVSName = "ThemeTermOntologyVS";
+//	
+//	/** Registers an instance of ThemeTermOntologyVisualStyle with the visual mapping manager's calculator catalog under the name "ThemeTermOntologyVS",
+//	 *  for later use when creating theme term ontology network views.
+//	 * 
+//	 */
+//	private static void registerThemeOntologyVisualStyle() {
+//		VisualMappingManager vmm = Cytoscape.getVisualMappingManager();
+//        if (!vmm.getCalculatorCatalog().getVisualStyleNames().contains(themeTermOntologyVSName)) {
+//            vmm.getCalculatorCatalog().addVisualStyle(new ThemeTermOntologyVisualStyle(vmm.getVisualStyle(),themeTermOntologyVSName));
+//        }
+//	}
 	
 }
