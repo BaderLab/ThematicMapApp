@@ -39,13 +39,13 @@ package org.ccbr.bader.yeast;
  */
 public class TM {
 
-	public static final String memberListAttName = "THEME_MEMBERS";
-	public static final String edgeSourceAttName = "INPUT_EDGES";
-	public static final String theme_member_count_att_name = "THEME_MEMBER_COUNT";
+	public static final String memberListAttName = "ThemeMapper.THEME_MEMBERS";
+	public static final String edgeSourceAttName = "ThemeMapper.INPUT_EDGES";
+	public static final String theme_member_count_att_name = "ThemeMapper.THEME_MEMBER_COUNT";
 	
 	/**
 	 * Records the probability value for this test which resulted from the hypergeometric distribution test 
 	 */
-	public static final String edgeHGTResult = "HGT_Result";
+	public static final String edgeHGTResult = "ThemeMapper.HGT_Result";
 	
 }
