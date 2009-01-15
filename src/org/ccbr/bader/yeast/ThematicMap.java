@@ -153,36 +153,130 @@ public class ThematicMap {
 		return thema;
 	}
 
+    public void getSingleNodes(CyNetwork inputNetwork, CyNetwork thematicMap, String attName, Set<Node> single_nodes, Set<Edge> single_node_edges) {
+        byte type = TMUtil.getNodeAttType(attName);
+        Set<Node> unassigned_nodes = new HashSet<Node>();
+        Set<Edge> unassigned_edges = new HashSet<Edge>();
+
+        // find unassigned nodes from the original network
+        Iterator orig_nodes_i = inputNetwork.nodesIterator();
+        while (orig_nodes_i.hasNext()) {
+            Node orig_node = (Node) orig_nodes_i.next();
+
+            Set<Object> themeAttVals = getAttValues(orig_node, attName, type);
+            if (themeAttVals.isEmpty()) {
+                //System.out.println("unassigned node: " + orig_node.toString());
+                unassigned_nodes.add(orig_node);
+            }
+
+        }
+
+        // create nodes in thematic map for each of the unassigned nodes in the original network
+        for (Node unassignedNode: unassigned_nodes) {
+            int nodeIndex = unassignedNode.getRootGraphIndex();
+            thematicMap.addNode(nodeIndex);
+            nodeAtt.setAttribute(unassignedNode.getIdentifier(), TM.theme_member_count_att_name, 1);
+
+            //add the input node to the theme node's member node list
+		    TMUtil.addToListAttribute(unassignedNode,TM.memberListAttName,unassignedNode.getIdentifier());
+
+        }
+
+
+        // find edges connecting unassigned nodes
+        Iterator orig_edges_i = inputNetwork.edgesIterator();
+        while (orig_edges_i.hasNext()) {
+            Edge orig_edge = (Edge) orig_edges_i.next();
+
+            String interact = edgeAtt.getStringAttribute(orig_edge.getIdentifier(), Semantics.INTERACTION);
+            Node source = orig_edge.getSource();
+            Node target = orig_edge.getTarget();
+
+            // NOT SURE ABOUT THIS OPTION
+            if (unassigned_nodes.contains(source) && unassigned_nodes.contains(target)) {
+
+                Edge themeNodeEdge = Cytoscape.getCyEdge(source, target, Semantics.INTERACTION, interact + "_tt", false, false);
+                // if the edge does not exist, create it
+                if (themeNodeEdge == null) {
+                    themeNodeEdge = Cytoscape.getCyEdge(source, target, Semantics.INTERACTION, interact + "_tt", true, false);
+                    edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeStatisticAttName, 0.0);
+                    edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName, 1);
+                    edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeStatisticTypeAttName, "COUNT");
+                    //recording the input edge's source and target nodes as an attribute of the theme edge
+
+                } else {
+                    // get current count
+                    int count = edgeAtt.getIntegerAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName);
+                    edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName, count + 1);
+                }
+                String themeEdgeAttributeVal = source.getIdentifier() + "-" + target.getIdentifier();
+                TMUtil.addToListAttribute(themeNodeEdge, TM.edgeSourceAttName, themeEdgeAttributeVal);
+                thematicMap.addEdge(themeNodeEdge);
+
+                //unassigned_edges.add(orig_edge);
+            }
+            else if (unassigned_nodes.contains(source)) {
+                Set<Object> themeAttVals = getAttValues(target, attName, type);
+                for (Object themeAttVal : themeAttVals) {
+                    Node themeAttNode = themeNameToThemeNode.get(themeAttVal);
+
+                    Edge themeNodeEdge = Cytoscape.getCyEdge(source, themeAttNode, Semantics.INTERACTION, interact + "_tt", false, false);
+                    // if the edge does not exist, create it
+                    if (themeNodeEdge == null) {
+                        themeNodeEdge = Cytoscape.getCyEdge(source, themeAttNode, Semantics.INTERACTION, interact + "_tt", true, false);
+                        edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeStatisticAttName, 0.0);
+                        edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName, 1);
+                        edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeStatisticTypeAttName, "COUNT");
+                        //recording the input edge's source and target nodes as an attribute of the theme edge
+
+                    }
+                    else {
+                        // get current count
+                        int count = edgeAtt.getIntegerAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName);
+                        edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName, count+1);
+                    }
+                    String themeEdgeAttributeVal = source.getIdentifier() + "-" + target.getIdentifier();
+                    TMUtil.addToListAttribute(themeNodeEdge, TM.edgeSourceAttName, themeEdgeAttributeVal);
+                    thematicMap.addEdge(themeNodeEdge);
+                }
+
+
+            }
+            else if (unassigned_nodes.contains(target)) {
+                Set<Object> themeAttVals = getAttValues(source, attName, type);
+                 for (Object themeAttVal:themeAttVals) {
+                     Node themeAttNode = themeNameToThemeNode.get(themeAttVal);
+
+                     Edge themeNodeEdge = Cytoscape.getCyEdge(themeAttNode, target, Semantics.INTERACTION, interact+"_tt", false, false);
+                     // if the edge does not exist, create it
+                     if (themeNodeEdge == null) {
+                         themeNodeEdge = Cytoscape.getCyEdge(themeAttNode, target, Semantics.INTERACTION, interact+"_tt", true, false);
+                         edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeStatisticAttName, 0.0);
+                         edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName, 1);
+                         edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeStatisticTypeAttName, "COUNT");
+                     }
+                     else {
+                         // get current count
+                         int count = edgeAtt.getIntegerAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName);
+                         edgeAtt.setAttribute(themeNodeEdge.getIdentifier(), TM.edgeSourceMemberCountAttName, count+1);
+                     }
+                     String themeEdgeAttributeVal = source.getIdentifier() + "-" + target.getIdentifier();
+                     TMUtil.addToListAttribute(themeNodeEdge, TM.edgeSourceAttName, themeEdgeAttributeVal);
+                     thematicMap.addEdge(themeNodeEdge);
+                 }
+            }
+
+        }
+    }
+
     /**Assigns the input graph node to the given theme node in the theme network, creating a new theme node in the theme network if one does
 	 * not already exist
 	 *
 	 * @param inputNode the input graph node which is being assigned as belonging to a particular theme in the theme graph
-	 * @param themeName the name of the theme to which the input node belongs
+	 * @param themeName the theme to which the input node belongs
 	 * @param themeNameToThemeNode the map from theme names to corresponding theme nodes in the thematic network
 	 * @param themeNetwork the thematic network
 	 */
-	private void assignNodeToTheme(Node inputNode, String themeName, Map<String, Node> themeNameToThemeNode, CyNetwork themeNetwork) {
-		if (!themeNameToThemeNode.containsKey(themeName)) {
-			//no theme node exists for this theme type, so create it first and add it to the map
-			//thema.addNode(new Node(null, type));
-			int themeNodeRootI = Cytoscape.getRootGraph().createNode();
-			int themeNodeI = themeNetwork.addNode(themeNodeRootI);
-			Node themeNode = themeNetwork.getNode(themeNodeI);
-			themeNode.setIdentifier(themeName);
-			//TMUtil.setStringAtt(themeNode,themeNode.getIdentifier(),themeName);
-
-			themeNameToThemeNode.put(themeName, themeNode);
-		}
-
-		//retrieve the theme node corresponding to this theme
-		Node themeNode = themeNameToThemeNode.get(themeName);
-
-		//add the input node to the theme node's member node list
-		TMUtil.addToListAttribute(themeNode,TM.memberListAttName,inputNode.getIdentifier());
-		// TODO Auto-generated method stub
-
-	}
-
     private void assignNodeToTheme(Node inputNode, Object themeName, Map<Object, Node> themeNameToThemeNode, CyNetwork themeNetwork) {
         if (themeName==null) {
             return;

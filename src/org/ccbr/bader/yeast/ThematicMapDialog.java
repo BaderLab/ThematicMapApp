@@ -60,6 +60,7 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
     private JScrollPane attributeListScrollPane;
     private JComboBox attributeListComboBox;
     private JCheckBox selfLoopCheckBox;
+    private JCheckBox includeSingleNodesCheckBox;    
     private JRadioButton noStatisticRadioButton;
     private JRadioButton shuffleStatisticRadioButton;
     private JTextField shuffleStatisticTextField;
@@ -163,6 +164,13 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
         return selfLoopCheckBox;
     }
 
+    private JCheckBox getIncludeSingleNodesCheckBox() {
+        if (includeSingleNodesCheckBox == null) {
+            includeSingleNodesCheckBox = new JCheckBox("Include single nodes from original network", false);
+        }
+        return includeSingleNodesCheckBox;
+    }
+    
     private JRadioButton getNoStatisticRadioButton() {
         if (noStatisticRadioButton == null) {
             noStatisticRadioButton = new JRadioButton("None");
@@ -578,6 +586,11 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
 
                     }
 
+                    if (includeSingleNodesCheckBox.isSelected()) {
+                        tmap.getSingleNodes(inputNetwork, thematicMap, attName, single_nodes, single_node_edges);
+
+                    }
+
                     //ThematicMapFunctionPrototype.createThematicMapDefaultView(thematicMap, attName, edgeWidthType);
                     tmap.createThematicMapDefaultView(thematicMap, attName, edgeWidthType);
 
@@ -635,42 +648,46 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
         c.gridy = 2;
         this.add(getSelfLoopCheckBox(),c);
 
+        c.gridx = 0;
+        c.gridy = 3;
+        this.add(getIncludeSingleNodesCheckBox(),c);
+
          c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 2;
         c.gridx=0;
-		c.gridy=3;
+		c.gridy=4;
         this.add(getStatisticsPanel(),c);
 
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 2;
         c.gridx=0;
-		c.gridy=4;
+		c.gridy=5;
         this.add(getEdgeWidthPanel(),c);
 
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 2;
         c.gridx=0;
-		c.gridy=5;
+		c.gridy=6;
         this.add(getEdgeWeightPanel(),c);
 
         c.anchor = GridBagConstraints.LINE_START;
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridwidth = 2;
         c.gridx=0;
-		c.gridy=6;
+		c.gridy=7;
         this.add(getEvaluateShufflePanel(),c);
 
         c.fill = GridBagConstraints.NONE;
         c.gridwidth = 1;
         c.gridx = 0;
-        c.gridy=7;
+        c.gridy=8;
         this.add(getCancelButton(),c);
 
         c.gridx=1;
-        c.gridy=7;
+        c.gridy=8;
         this.add(getCreateMapButton(),c);
 
         pack();
