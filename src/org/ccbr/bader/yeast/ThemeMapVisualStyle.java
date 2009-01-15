@@ -36,6 +36,9 @@ package org.ccbr.bader.yeast;
 import java.awt.Color;
 import java.awt.Shape;
 import java.util.List;
+import java.util.Iterator;
+import java.util.HashSet;
+import java.util.Set;
 
 import giny.model.Edge;
 import giny.model.Node;
@@ -101,20 +104,10 @@ public class ThemeMapVisualStyle extends VisualStyle {
 		
 		private void modifyEdgeAppearance(EdgeAppearance appr, Edge edge, CyNetwork network) {
 //			this.modifyEdgeAppearance(appr, edge, network);
-			Color edgeColor = calculateEdgeColorFromHGTestResult(edge);
-			appr.setColor(edgeColor);
+			//Color edgeColor = calculateEdgeColorFromHGTestResult(edge);
+			//appr.setColor(edgeColor);
 			appr.applyBypass(edge);
 			return;
-		}
-
-		private Color calculateEdgeColorFromHGTestResult(Edge edge) {
-			double hgtp = TMUtil.getHGTResult(edge);
-			int redComponent = (int) (hgtp * (double) 255);
-			int blueComponent = (int) (255- (int) (hgtp * (double) 255));
-//			int greenComponent = (int) (255- (int) (hgtp * (double) 255));
-			int greenComponent = 127;
-			Color edgeColor = new Color(redComponent,greenComponent,blueComponent);
-			return edgeColor;
 		}
 		
 	}

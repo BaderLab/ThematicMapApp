@@ -93,7 +93,9 @@ public class TMUtil {
 		if (listAtt == null) {
 			listAtt = new ArrayList<String>();
 		}
-		listAtt.add(value);
+        if (!listAtt.contains(value)) {
+            listAtt.add(value);
+        }        
 		attributes.setListAttribute(id, attributeName, listAtt);
 	}
 	
@@ -148,10 +150,6 @@ public class TMUtil {
 
 	public static void setEdgeDoubleAttr(Edge edge, String attributeName, double value) {
 		edgeAtt.setAttribute(edge.getIdentifier(), attributeName, value);
-	}
-
-	public static double getHGTResult(Edge edge) {
-		return edgeAtt.getDoubleAttribute(edge.getIdentifier(), TM.edgeHGTResult);
 	}
 	
 }

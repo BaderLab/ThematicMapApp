@@ -42,10 +42,10 @@ public class TM {
 	public static final String memberListAttName = "ThemeMapper.THEME_MEMBERS";
 	public static final String edgeSourceAttName = "ThemeMapper.INPUT_EDGES";
 	public static final String theme_member_count_att_name = "ThemeMapper.THEME_MEMBER_COUNT";
-	
-	/**
-	 * Records the probability value for this test which resulted from the hypergeometric distribution test 
-	 */
-	public static final String edgeHGTResult = "ThemeMapper.HGT_Result";
+    public static final String edgeSourceMemberCountAttName = "ThemeMapper.INPUT_EDGES_COUNT";
+    public static final String edgeStatisticAttName = "ThemeMapper.EDGE_STATISTIC";
+    public static final String edgeStatisticTypeAttName = "ThemeMapper.EDGE_STATISTIC_TYPE";
+    public static final String edgeWeightListAttName = "ThemeMapper.EDGE_WEIGHT_LIST";
+    public static final String avgEdgeWeightAttName = "ThemeMapper.AVERAGE_EDGE_WEIGHT";
 	
 }

@@ -45,7 +45,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.MenuEvent;
 import javax.swing.event.MenuListener;
 
-import csplugins.layout.algorithms.graphPartition.AbstractLayout;
+import java.io.IOException;
+
+//import csplugins.layout.algorithms.graphPartition.AbstractLayout;
 import csplugins.layout.algorithms.graphPartition.AttributeCircleLayout;
 
 import cytoscape.CyNetwork;
@@ -56,7 +58,7 @@ public class ThematicMapMenu extends JMenu implements MenuListener {
 
 	public ThematicMapMenu() {
 	    // call the super constructor
-	    super("Create Thematic Map Using Attribute ->");
+	    super("Create Thematic Map Using Attribute");
 
 	    // add this class as a listener. See method menuSelected()
 	    this.addMenuListener(this);
@@ -108,9 +110,9 @@ public class ThematicMapMenu extends JMenu implements MenuListener {
 	            {
 	              public void run()
 	              {
-	                // get the network and attributes
-	                CyNetwork    network    = Cytoscape.getCurrentNetwork();
-	                CyAttributes attributes = Cytoscape.getNodeAttributes();
+                      // get the network and attributes
+                      CyNetwork network = Cytoscape.getCurrentNetwork();
+                      CyAttributes attributes = Cytoscape.getNodeAttributes();
 
 //	                // create a new AttributeCircleLayout object, based on
 //	                // which menu item was selected
@@ -119,14 +121,24 @@ public class ThematicMapMenu extends JMenu implements MenuListener {
 //
 //	                // layout the network
 //	                layoutObj.layout();
-	                
-	                
-	                CyNetwork    inputNetwork    = Cytoscape.getCurrentNetwork();
-	                String themeAttributeName = _attributeName;
-	                CyNetwork thematicMap = ThematicMapFunctionPrototype.createThematicMap(inputNetwork, themeAttributeName);
-	                ThematicMapFunctionPrototype.createThematicMapDefaultView(thematicMap, themeAttributeName);
 
-	              } // end run()
+                      ThematicMapDialog tmd;
+
+                      try {
+                          tmd = new ThematicMapDialog(Cytoscape.getDesktop(), true);
+                          tmd.setLocationRelativeTo(Cytoscape.getDesktop());
+                          tmd.setVisible(true);
+                      }
+                      catch (IOException e1) {
+                          e1.printStackTrace();
+                      }
+
+                      CyNetwork inputNetwork = Cytoscape.getCurrentNetwork();
+                      String themeAttributeName = _attributeName;
+                      CyNetwork thematicMap = ThematicMapFunctionPrototype.createThematicMap(inputNetwork, themeAttributeName);
+                      ThematicMapFunctionPrototype.createThematicMapDefaultView(thematicMap, themeAttributeName, ThematicMapFunctionPrototype.EDGE_WIDTH_COUNT);
+
+                  } // end run()
 
 	            } // end new Runnable
 

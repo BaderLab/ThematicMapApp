@@ -55,22 +55,24 @@ public class ThematicMapPlugin extends CytoscapePlugin
         JMenu menu = Cytoscape.getDesktop().getCyMenus().getOperationsMenu();
         JMenuItem item;
 
-        //MCODE submenu
+        //Thematic Map submenu
         JMenu submenu = new JMenu("ThematicMap");
 
+        //submenu.add(new ThematicMapMenu());
+        //menu.add(submenu);
+
         ThematicMapPanelAction actionListener = new ThematicMapPanelAction();
-        
-        //MCODE panel
-        //add the start goslimmer option
-        item = new JMenuItem("Start ThematicMap");
+
+        //Add the 'create thematic map' option
+        item = new JMenuItem("Create Thematic Map");
         item.addActionListener(actionListener);
-        //submenu.add(item);
-        //add the exit goslimmer option
-        item = new JMenuItem("Exit ThematicMap");
-        item.addActionListener(actionListener);
-        //submenu.add(item);
-        submenu.add(new ThematicMapMenu());
+        submenu.add(item);
+
         menu.add(submenu);
+
+
+
+
     }
 
 	@Override
