@@ -15,6 +15,8 @@ import cytoscape.view.CyNetworkView;
 import java.awt.*;
 import java.awt.List;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 import giny.model.Node;
 import giny.model.Edge;
@@ -116,8 +118,9 @@ public class ThematicMap {
 		while(nodeI.hasNext()) {
 			Node themeNode = nodeI.next();
 			int themeMemberCount = TMUtil.getNumThemeMembers(themeNode);
-			TMUtil.setNodeIntAttribute(themeNode,TM.theme_member_count_att_name,themeMemberCount);
-		}
+            nodeAtt.setAttribute(themeNode.getIdentifier(), TM.theme_member_count_att_name, themeMemberCount);
+            nodeAtt.setAttribute(themeNode.getIdentifier(), TM.formattedNameAttributeName,formatName(themeNode.getIdentifier()));
+        }
 
         // iterate through the theme edges, creating the INPUT_EDGES_COUNT attribute, the AVERAGE_EDGE_WEIGHT attribute,
         // the EDGE_STATISTIC attribute and the EDGE_STATISTIC_TYPE attribute
@@ -492,8 +495,9 @@ public class ThematicMap {
         nodeAppCalc.setDefaultAppearance(na);
 
         // Passthrough Mapping - set node label
-		PassThroughMapping pm = new PassThroughMapping(new String(), "ID");
-		Calculator nlc = new BasicCalculator("Theme Map Node Label Calculator",pm, VisualPropertyType.NODE_LABEL);
+		//PassThroughMapping pm = new PassThroughMapping(new String(), "ID");
+        PassThroughMapping pm = new PassThroughMapping(new String(), TM.formattedNameAttributeName);
+        Calculator nlc = new BasicCalculator("Theme Map Node Label Calculator",pm, VisualPropertyType.NODE_LABEL);
 		nodeAppCalc.setCalculator(nlc);
 
         //  Continuous Mapping - set node size (max = 100, min = 10)
@@ -628,6 +632,45 @@ public class ThematicMap {
         }
 
         return attValues;
+    }
+
+    private String formatName(String name) {
+        int curLength = 0;
+        String newName = "";
+        int maxSize = 15;
+
+        Pattern pattern = Pattern.compile("[ \t\n\f\r]");
+        Matcher matcher = pattern.matcher(name);
+        int index = 0;
+        while (matcher.find(index)) {
+            String word = name.substring(index, matcher.start());
+            String whiteSpace = name.substring(matcher.start(), matcher.end());
+
+            if (curLength + word.length() + whiteSpace.length() < maxSize) {
+                newName = newName + word + whiteSpace;
+                curLength = curLength + word.length() + whiteSpace.length();
+            }
+            else if (curLength + word.length() < maxSize) {
+                newName = newName + word + "\n";
+                curLength = 0;
+            }
+            else {
+                newName = newName + "\n" + word + whiteSpace;
+                curLength = word.length() + whiteSpace.length();
+            }
+
+            index = matcher.end();
+        }
+        String lastWord = name.substring(index);
+        if (curLength + lastWord.length() > maxSize) {
+            newName = newName + "\n" + lastWord;
+        }
+        else {
+            newName = newName + lastWord;
+        }
+
+        return newName;
+
     }
 
 }

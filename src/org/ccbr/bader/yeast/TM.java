@@ -47,5 +47,6 @@ public class TM {
     public static final String edgeStatisticTypeAttName = "ThemeMapper.EDGE_STATISTIC_TYPE";
     public static final String edgeWeightListAttName = "ThemeMapper.EDGE_WEIGHT_LIST";
     public static final String avgEdgeWeightAttName = "ThemeMapper.AVERAGE_EDGE_WEIGHT";
+    public static final String formattedNameAttributeName = "ThemeMapper.FORMATTED_NAME";
 	
 }
