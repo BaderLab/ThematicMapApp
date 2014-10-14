@@ -35,8 +35,9 @@ package org.ccbr.bader.yeast;
 
 import java.util.Set;
 
-import giny.model.Edge;
-import giny.model.Node;
+import org.cytoscape.model.CyEdge;
+import org.cytoscape.model.CyNode;
+
 
 /**This is a class which will be used for representing generic ontologies.  It may provide easy mechanisms for integrating with the cytoscape 
  * CyNetwork representation of graphs.  The particular graph structure is works with are directed acyclic graphs (DAGs), an example of which are 
@@ -55,23 +56,23 @@ public interface Ontology {
 	public void setISAEdgeTypeName(String isa);
 	public String getISAEdgeTypeName();
 	
-	public Set<Node> getChildren(Node node);
+	public Set<CyNode> getChildren(CyNode node);
 	
-	public Set<Node> getParents(Node node);
+	public Set<CyNode> getParents(CyNode node);
 	
 	/**Adds node to the graph as child of parent (ISA relationship)
 	 * @param parent
 	 * @param child
 	 */
-	public void addChild(Node parent, Node child);
+	public void addChild(CyNode parent, CyNode child);
 	
 	/**Creates an ISA edge between two existing nodes 
 	 * @param parent existing parent node for new connection
 	 * @param child existing child node for new connection
 	 * @return newly created edge between parent and child
 	 */
-	public Edge createISAEdge(Node parent, Node child);
+	public CyEdge createISAEdge(CyNode parent, CyNode child);
 	
-	public void removeEdge(Edge edge);
+	public void removeEdge(CyEdge edge);
 	
 }

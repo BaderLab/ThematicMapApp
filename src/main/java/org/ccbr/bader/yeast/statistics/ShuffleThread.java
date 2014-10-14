@@ -8,19 +8,22 @@ package org.ccbr.bader.yeast.statistics;
  * To change this template use File | Settings | File Templates.
  */
 
-import java.lang.Runnable;
-import giny.model.Node;
-import giny.model.Edge;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
-import java.util.*;
+import org.cytoscape.model.CyNode;
 
 
 public class ShuffleThread implements Runnable {
 
-    List<Node> sourceList;
-    List<Node> targetList;
+    List<CyNode> sourceList;
+    List<CyNode> targetList;
     List<String> edgeTypeList;
-    Map<Node, Set<Object>> nodeToAttValueMap;       // map of att values associated with each input node
+    Map<CyNode, Set<Object>> nodeToAttValueMap;       // map of att values associated with each input node
     Map<Object, Integer> attValueToIndexMap;  // map of attribute values and their index in the list
     Random gen;
 
@@ -31,7 +34,7 @@ public class ShuffleThread implements Runnable {
     int trials;
     String name;
 
-    public ShuffleThread(String name, int trials, long generatorSeed, List<Node> sourceList, List<Node> targetList, List<String> edgeTypeList, Map<Node, Set<Object>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap, List<Map<String,int[][]>> allRandomizedMaps, Map<String,List<int[][]>> allRandomizedMaps2) {
+    public ShuffleThread(String name, int trials, long generatorSeed, List<CyNode> sourceList, List<CyNode> targetList, List<String> edgeTypeList, Map<CyNode, Set<Object>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap, List<Map<String,int[][]>> allRandomizedMaps, Map<String,List<int[][]>> allRandomizedMaps2) {
         this.trials = trials;
         this.name = name;
 
@@ -53,7 +56,7 @@ public class ShuffleThread implements Runnable {
         for(int i=0; i<trials; i++) {
 
             //randomizeTargets
-            List<Node> randomizedTargetList = randomizeList(targetList);
+            List<CyNode> randomizedTargetList = randomizeList(targetList);
 
             // create thematic map edge matrices for randomized targets
             Map<String, int[][]> edgeTypeToRandomThemeMap = createThemeMapEdgeMatrices(sourceList, randomizedTargetList, edgeTypeList, nodeToAttValueMap, attValueToIndexMap);
@@ -82,9 +85,9 @@ public class ShuffleThread implements Runnable {
         }
     }
 
-    private List<Node> randomizeList(List<Node> originalList) {
-        List<Node> randomizedArray = new ArrayList<Node>();
-        List<Node> tempList = new ArrayList<Node>(originalList);
+    private List<CyNode> randomizeList(List<CyNode> originalList) {
+        List<CyNode> randomizedArray = new ArrayList<CyNode>();
+        List<CyNode> tempList = new ArrayList<CyNode>(originalList);
 
         int numElements = originalList.size();
 
@@ -97,15 +100,15 @@ public class ShuffleThread implements Runnable {
         return randomizedArray;
     }
 
-    private Map<String, int[][]> createThemeMapEdgeMatrices(List<Node> sources, List<Node> targets, List<String> types, Map<Node, Set<Object>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap) {
+    private Map<String, int[][]> createThemeMapEdgeMatrices(List<CyNode> sources, List<CyNode> targets, List<String> types, Map<CyNode, Set<Object>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap) {
 
         int numAttributes = attValueToIndexMap.size();
         Map<String,int[][]> edgeTypeToThemeMap = new HashMap<String, int[][]>();
 
         // loop through edges
         for (int i = 0; i < sources.size(); i++) {
-            Node source = sources.get(i);
-            Node target = targets.get(i);
+        	CyNode source = sources.get(i);
+        	CyNode target = targets.get(i);
             String type = types.get(i);
 
             int[][] themeMapEdges;
