@@ -9,35 +9,28 @@ package org.ccbr.bader.yeast;
  */
 
 import java.awt.event.ActionEvent;
-import java.io.IOException;
 
 import org.cytoscape.application.swing.AbstractCyAction;
 import org.cytoscape.application.swing.CySwingApplication;
 
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+
 @SuppressWarnings("serial")
 public class ThematicMapPanelAction extends AbstractCyAction {
 
-	private final CySwingApplication application;
+	@Inject private CySwingApplication application;
+	@Inject private Provider<ThematicMapDialog> dialogProvider;
+	
     
-    public ThematicMapPanelAction(CySwingApplication application) {
+    public ThematicMapPanelAction() {
 		super("Create Thematic Map");
-		this.application = application;
 	}
 
-    
 	@Override
     public void actionPerformed(ActionEvent event) {
-
-        ThematicMapDialog tmd;
-
-        try {
-            tmd = new ThematicMapDialog(application.getJFrame(), true);
-            tmd.setLocationRelativeTo(application.getJFrame());
-            tmd.setVisible(true);
-        }
-        catch (IOException e1) {
-            e1.printStackTrace();
-        }
-
+        ThematicMapDialog tmd = dialogProvider.get();
+        tmd.setLocationRelativeTo(application.getJFrame());
+        tmd.setVisible(true);
     }
 }

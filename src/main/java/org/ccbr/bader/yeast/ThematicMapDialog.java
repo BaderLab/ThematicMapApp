@@ -8,46 +8,35 @@ package org.ccbr.bader.yeast;
  * To change this template use File | Settings | File Templates.
  */
 
-import javax.swing.*;
-import javax.swing.border.*;
-
-import java.awt.event.ActionListener;
-import java.awt.event.ActionEvent;
+import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.LayoutManager;
-import java.awt.Dimension;
-import java.awt.Color;
-
-import java.beans.PropertyChangeListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
-import java.io.IOException;
+import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.Iterator;
-import java.util.Set;
-import java.util.HashSet;
 
-import org.jdesktop.layout.GroupLayout;
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFormattedTextField;
+import javax.swing.JLabel;
+import javax.swing.JList;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
+
 import org.ccbr.bader.yeast.view.gui.misc.JButtonMod;
 import org.ccbr.bader.yeast.view.gui.misc.JLabelMod;
-import org.ccbr.bader.yeast.view.gui.misc.JCollapsablePanel;
-import org.ccbr.bader.yeast.statistics.NetworkShuffleStatisticMultiThreaded;
-import org.ccbr.bader.yeast.statistics.HyperGeomProbabilityStatistic;
 
-import cytoscape.data.CyAttributes;
-import cytoscape.Cytoscape;
-import cytoscape.CyNetwork;
-import cytoscape.view.CyNetworkView;
-import cytoscape.task.Task;
-import cytoscape.task.TaskMonitor;
-import cytoscape.task.ui.JTaskConfig;
-import cytoscape.task.util.TaskManager;
-
-
-import giny.model.Edge;
-import giny.model.Node;
-import giny.view.EdgeView;
+import com.google.inject.Inject;
 
 
 public class ThematicMapDialog extends JDialog implements PropertyChangeListener, ActionListener {
@@ -81,8 +70,10 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
 
     private File evaluateShuffleFile = null;
 
-    public ThematicMapDialog(Frame parent, boolean modal) throws IOException {
-	    super(parent, modal);
+    
+    @Inject
+    public ThematicMapDialog(Frame parent) {
+	    super(parent, true);
         this.setTitle("Create Thematic Map Dialog");
 
         initComponents();
@@ -450,170 +441,170 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
     }
 
     public void actionPerformed(ActionEvent event) {
-        Object src = event.getSource();
-        if (src instanceof JRadioButton) {
-            shuffleStatisticTextField.setEnabled(shuffleStatisticRadioButton.isSelected());
-            evaluateShuffleCheckBox.setEnabled(shuffleStatisticRadioButton.isSelected());
-
-            edgeWidthStatisticRadioButton.setEnabled(shuffleStatisticRadioButton.isSelected() || hyperGeoProbabilityStatisticRadioButton.isSelected() || cumulativeHGProbabilityStatisticRadioButton.isSelected());
-            if (!edgeWidthStatisticRadioButton.isEnabled() && edgeWidthStatisticRadioButton.isSelected()) {
-                edgeWidthCountRadioButton.setSelected(true);
-            }
-        }
-        else if (src instanceof JCheckBox) {
-            JCheckBox cbsrc = (JCheckBox) src;
-            if (cbsrc.equals(edgeWeightCheckBox)) {
-                edgeWeightAttributeListComboBox.setEnabled(edgeWeightCheckBox.isSelected());
-            }
-            else if (cbsrc.equals(evaluateShuffleCheckBox)) {
-                evaluateShuffleFlagsTextField.setEnabled(evaluateShuffleCheckBox.isSelected());
-                evaluateShuffleChooseFileButton.setEnabled(evaluateShuffleCheckBox.isSelected());
-                evaluateShuffleFileLabel.setEnabled(evaluateShuffleCheckBox.isSelected());    
-            }
-        }
-        else if (src instanceof JButton) {
-            JButton bsrc = (JButton) src;
-            if (bsrc.equals(cancelButton)) {  // Cancel
-                dispose();
-            }
-            else if (bsrc.equals(evaluateShuffleChooseFileButton)) {  // choose save file for shuffle evaluations
-                JFileChooser chooser = new JFileChooser();
-                //chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-                int retval = chooser.showSaveDialog(this);
-
-                if (retval == JFileChooser.APPROVE_OPTION) {
-				    evaluateShuffleFile = chooser.getSelectedFile();
-                    System.out.println("evaluateFile at dialog level: " + evaluateShuffleFile);
-                    evaluateShuffleFileLabel.setText(evaluateShuffleFile.getAbsolutePath());
-                }
-            }
-            else if (bsrc.equals(createMapButton)) { // Create thematic Map
-
-                if (attributeListComboBox.getSelectedIndex()<=0) {
-                    JOptionPane.showMessageDialog(Cytoscape.getDesktop(), "Select an attribute before creating thematic map.","Error",JOptionPane.ERROR_MESSAGE);
-                    System.out.println("You must select an attribute before creating the map");
-                }
-                else if (evaluateShuffleCheckBox.isSelected() && evaluateShuffleFile==null) {
-                    JOptionPane.showMessageDialog(Cytoscape.getDesktop(), "Select a save file for the shuffle evaluations, or disable the evaluations","Error",JOptionPane.ERROR_MESSAGE);
-                }
-                else {
-                    String attName = (String) attributeListComboBox.getSelectedItem();
-                    ThematicMap tmap = new ThematicMap();
-
-                    // determine whether edge weights should be read and stored
-                    if (edgeWeightCheckBox.isSelected() && edgeWeightAttributeListComboBox.getSelectedIndex()>0) {
-                        String edgeWeightAttributeName = (String) edgeWeightAttributeListComboBox.getSelectedItem();
-                        //ThematicMapFunctionPrototype.setEdgeWeightAttributeName(edgeWeightAttributeName);
-                        tmap.setEdgeWeightAttributeName(edgeWeightAttributeName);
-                    }
-
-                    CyNetwork inputNetwork = Cytoscape.getCurrentNetwork();
-                    //CyNetwork thematicMap = ThematicMapFunctionPrototype.createThematicMap(inputNetwork, attName);
-                    CyNetwork thematicMap = tmap.createThematicMap(inputNetwork, attName);
-
-                   // if includeSingleNode check box is checked, loop through the original network and add the nodes that don't have any associated attributes
-                    Set<Node> single_nodes = new HashSet<Node>();
-                    Set<Edge> single_node_edges = new HashSet<Edge>();
-
-
-
-                    if (shuffleStatisticRadioButton.isSelected()) {
-
-                        int[] allFlagValues = null;
-
-                        try {
-
-                            // check to see if will be performing evaluation, and get flag levels
-                            if (evaluateShuffleCheckBox.isSelected()) {
-                                String flagList = evaluateShuffleFlagsTextField.getText();
-                                String[] allFlags = flagList.split(",");
-
-                                allFlagValues = new int[allFlags.length];
-                                for (int i=0; i<allFlags.length; i++) {
-                                    allFlagValues[i] = Integer.parseInt(allFlags[i]);
-                                }
-                            }
-
-
-                        }
-                        catch (NumberFormatException e) {
-                            JOptionPane.showMessageDialog(this,"Invalid values for evaluation flags.  Flags must be valid integers.  No evaluation will be conducted.", "Error", JOptionPane.ERROR_MESSAGE);
-                            allFlagValues = null;
-                        }
-
-                        try {
-                            int shuffleIterations = Integer.parseInt(shuffleStatisticTextField.getText());
-
-                            long timeBefore = System.currentTimeMillis();
-                            //NetworkShuffleStatistic stat = new NetworkShuffleStatistic(inputNetwork,thematicMap);
-                            //stat.getStatisticsProgressBar(attName, shuffleIterations, allFlagValues, evaluateShuffleFile);
-
-                            NetworkShuffleStatisticMultiThreaded statThreaded = new NetworkShuffleStatisticMultiThreaded(inputNetwork, thematicMap);
-                            statThreaded.getStatistics(attName, shuffleIterations, allFlagValues, evaluateShuffleFile);
-                            long timeAfter = System.currentTimeMillis();
-
-                            //System.out.println("time elapsed: " + (timeAfter-timeBefore)/1000.0);
-
-                        }
-                        catch (NumberFormatException e) {
-                            JOptionPane.showMessageDialog(this,"Invalid value '" + shuffleStatisticTextField.getText() + "' for shuffle iterations - must be a valid integer. Statistics will not be calculated.", "Error", JOptionPane.ERROR_MESSAGE);
-                            shuffleStatisticTextField.setText("1000");
-                        }                       
-
-                    }
-                    else if (hyperGeoProbabilityStatisticRadioButton.isSelected()) {
-                        HyperGeomProbabilityStatistic stat = new HyperGeomProbabilityStatistic(inputNetwork, thematicMap);
-                        stat.getStatistics(attName, false);
-                    }
-                    else if (cumulativeHGProbabilityStatisticRadioButton.isSelected()) {
-                        HyperGeomProbabilityStatistic stat = new HyperGeomProbabilityStatistic(inputNetwork, thematicMap);
-                        stat.getStatistics(attName, true);
-                    }
-                    else {
-                        // Loop through edges and copy the count attribute to the statistic attribute, and update the statistic type attribute
-
-                    }
-
-                    int edgeWidthType;
-                    if (edgeWidthStatisticRadioButton.isSelected()) {
-                        //edgeWidthType = ThematicMapFunctionPrototype.EDGE_WIDTH_STATISTICS;
-                        edgeWidthType = ThematicMap.EDGE_WIDTH_STATISTICS;
-                    }
-                    else {
-                        //edgeWidthType = ThematicMapFunctionPrototype.EDGE_WIDTH_COUNT;
-                        edgeWidthType = ThematicMap.EDGE_WIDTH_COUNT;
-
-                    }
-
-                    if (includeSingleNodesCheckBox.isSelected()) {
-                        tmap.getSingleNodes(inputNetwork, thematicMap, attName, single_nodes, single_node_edges);
-
-                    }
-
-                    //ThematicMapFunctionPrototype.createThematicMapDefaultView(thematicMap, attName, edgeWidthType);
-                    tmap.createThematicMapDefaultView(thematicMap, attName, edgeWidthType);
-
-                    if (selfLoopCheckBox.isSelected()) {
-                        // loop through network edges to find self loops
-                        Iterator edges_i = thematicMap.edgesIterator();
-                        CyNetworkView thematicMapView = Cytoscape.getNetworkView(thematicMap.getIdentifier());
-
-                        while (edges_i.hasNext()) {
-                            Edge edge = (Edge) edges_i.next();
-                            if (edge.getSource().equals(edge.getTarget())) {
-                                EdgeView edgeView = thematicMapView.getEdgeView(edge);
-                                thematicMapView.hideGraphObject(edgeView);
-                            }
-                        }
-                        thematicMapView.updateView();
-
-                    }
-
-                    dispose();
-                }               
-            }
-        }
+//        Object src = event.getSource();
+//        if (src instanceof JRadioButton) {
+//            shuffleStatisticTextField.setEnabled(shuffleStatisticRadioButton.isSelected());
+//            evaluateShuffleCheckBox.setEnabled(shuffleStatisticRadioButton.isSelected());
+//
+//            edgeWidthStatisticRadioButton.setEnabled(shuffleStatisticRadioButton.isSelected() || hyperGeoProbabilityStatisticRadioButton.isSelected() || cumulativeHGProbabilityStatisticRadioButton.isSelected());
+//            if (!edgeWidthStatisticRadioButton.isEnabled() && edgeWidthStatisticRadioButton.isSelected()) {
+//                edgeWidthCountRadioButton.setSelected(true);
+//            }
+//        }
+//        else if (src instanceof JCheckBox) {
+//            JCheckBox cbsrc = (JCheckBox) src;
+//            if (cbsrc.equals(edgeWeightCheckBox)) {
+//                edgeWeightAttributeListComboBox.setEnabled(edgeWeightCheckBox.isSelected());
+//            }
+//            else if (cbsrc.equals(evaluateShuffleCheckBox)) {
+//                evaluateShuffleFlagsTextField.setEnabled(evaluateShuffleCheckBox.isSelected());
+//                evaluateShuffleChooseFileButton.setEnabled(evaluateShuffleCheckBox.isSelected());
+//                evaluateShuffleFileLabel.setEnabled(evaluateShuffleCheckBox.isSelected());    
+//            }
+//        }
+//        else if (src instanceof JButton) {
+//            JButton bsrc = (JButton) src;
+//            if (bsrc.equals(cancelButton)) {  // Cancel
+//                dispose();
+//            }
+//            else if (bsrc.equals(evaluateShuffleChooseFileButton)) {  // choose save file for shuffle evaluations
+//                JFileChooser chooser = new JFileChooser();
+//                //chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+//                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+//                int retval = chooser.showSaveDialog(this);
+//
+//                if (retval == JFileChooser.APPROVE_OPTION) {
+//				    evaluateShuffleFile = chooser.getSelectedFile();
+//                    System.out.println("evaluateFile at dialog level: " + evaluateShuffleFile);
+//                    evaluateShuffleFileLabel.setText(evaluateShuffleFile.getAbsolutePath());
+//                }
+//            }
+//            else if (bsrc.equals(createMapButton)) { // Create thematic Map
+//
+//                if (attributeListComboBox.getSelectedIndex()<=0) {
+//                    JOptionPane.showMessageDialog(Cytoscape.getDesktop(), "Select an attribute before creating thematic map.","Error",JOptionPane.ERROR_MESSAGE);
+//                    System.out.println("You must select an attribute before creating the map");
+//                }
+//                else if (evaluateShuffleCheckBox.isSelected() && evaluateShuffleFile==null) {
+//                    JOptionPane.showMessageDialog(Cytoscape.getDesktop(), "Select a save file for the shuffle evaluations, or disable the evaluations","Error",JOptionPane.ERROR_MESSAGE);
+//                }
+//                else {
+//                    String attName = (String) attributeListComboBox.getSelectedItem();
+//                    ThematicMap tmap = new ThematicMap();
+//
+//                    // determine whether edge weights should be read and stored
+//                    if (edgeWeightCheckBox.isSelected() && edgeWeightAttributeListComboBox.getSelectedIndex()>0) {
+//                        String edgeWeightAttributeName = (String) edgeWeightAttributeListComboBox.getSelectedItem();
+//                        //ThematicMapFunctionPrototype.setEdgeWeightAttributeName(edgeWeightAttributeName);
+//                        tmap.setEdgeWeightAttributeName(edgeWeightAttributeName);
+//                    }
+//
+//                    CyNetwork inputNetwork = Cytoscape.getCurrentNetwork();
+//                    //CyNetwork thematicMap = ThematicMapFunctionPrototype.createThematicMap(inputNetwork, attName);
+//                    CyNetwork thematicMap = tmap.createThematicMap(inputNetwork, attName);
+//
+//                   // if includeSingleNode check box is checked, loop through the original network and add the nodes that don't have any associated attributes
+//                    Set<Node> single_nodes = new HashSet<Node>();
+//                    Set<Edge> single_node_edges = new HashSet<Edge>();
+//
+//
+//
+//                    if (shuffleStatisticRadioButton.isSelected()) {
+//
+//                        int[] allFlagValues = null;
+//
+//                        try {
+//
+//                            // check to see if will be performing evaluation, and get flag levels
+//                            if (evaluateShuffleCheckBox.isSelected()) {
+//                                String flagList = evaluateShuffleFlagsTextField.getText();
+//                                String[] allFlags = flagList.split(",");
+//
+//                                allFlagValues = new int[allFlags.length];
+//                                for (int i=0; i<allFlags.length; i++) {
+//                                    allFlagValues[i] = Integer.parseInt(allFlags[i]);
+//                                }
+//                            }
+//
+//
+//                        }
+//                        catch (NumberFormatException e) {
+//                            JOptionPane.showMessageDialog(this,"Invalid values for evaluation flags.  Flags must be valid integers.  No evaluation will be conducted.", "Error", JOptionPane.ERROR_MESSAGE);
+//                            allFlagValues = null;
+//                        }
+//
+//                        try {
+//                            int shuffleIterations = Integer.parseInt(shuffleStatisticTextField.getText());
+//
+//                            long timeBefore = System.currentTimeMillis();
+//                            //NetworkShuffleStatistic stat = new NetworkShuffleStatistic(inputNetwork,thematicMap);
+//                            //stat.getStatisticsProgressBar(attName, shuffleIterations, allFlagValues, evaluateShuffleFile);
+//
+//                            NetworkShuffleStatisticMultiThreaded statThreaded = new NetworkShuffleStatisticMultiThreaded(inputNetwork, thematicMap);
+//                            statThreaded.getStatistics(attName, shuffleIterations, allFlagValues, evaluateShuffleFile);
+//                            long timeAfter = System.currentTimeMillis();
+//
+//                            //System.out.println("time elapsed: " + (timeAfter-timeBefore)/1000.0);
+//
+//                        }
+//                        catch (NumberFormatException e) {
+//                            JOptionPane.showMessageDialog(this,"Invalid value '" + shuffleStatisticTextField.getText() + "' for shuffle iterations - must be a valid integer. Statistics will not be calculated.", "Error", JOptionPane.ERROR_MESSAGE);
+//                            shuffleStatisticTextField.setText("1000");
+//                        }                       
+//
+//                    }
+//                    else if (hyperGeoProbabilityStatisticRadioButton.isSelected()) {
+//                        HyperGeomProbabilityStatistic stat = new HyperGeomProbabilityStatistic(inputNetwork, thematicMap);
+//                        stat.getStatistics(attName, false);
+//                    }
+//                    else if (cumulativeHGProbabilityStatisticRadioButton.isSelected()) {
+//                        HyperGeomProbabilityStatistic stat = new HyperGeomProbabilityStatistic(inputNetwork, thematicMap);
+//                        stat.getStatistics(attName, true);
+//                    }
+//                    else {
+//                        // Loop through edges and copy the count attribute to the statistic attribute, and update the statistic type attribute
+//
+//                    }
+//
+//                    int edgeWidthType;
+//                    if (edgeWidthStatisticRadioButton.isSelected()) {
+//                        //edgeWidthType = ThematicMapFunctionPrototype.EDGE_WIDTH_STATISTICS;
+//                        edgeWidthType = ThematicMap.EDGE_WIDTH_STATISTICS;
+//                    }
+//                    else {
+//                        //edgeWidthType = ThematicMapFunctionPrototype.EDGE_WIDTH_COUNT;
+//                        edgeWidthType = ThematicMap.EDGE_WIDTH_COUNT;
+//
+//                    }
+//
+//                    if (includeSingleNodesCheckBox.isSelected()) {
+//                        tmap.getSingleNodes(inputNetwork, thematicMap, attName, single_nodes, single_node_edges);
+//
+//                    }
+//
+//                    //ThematicMapFunctionPrototype.createThematicMapDefaultView(thematicMap, attName, edgeWidthType);
+//                    tmap.createThematicMapDefaultView(thematicMap, attName, edgeWidthType);
+//
+//                    if (selfLoopCheckBox.isSelected()) {
+//                        // loop through network edges to find self loops
+//                        Iterator edges_i = thematicMap.edgesIterator();
+//                        CyNetworkView thematicMapView = Cytoscape.getNetworkView(thematicMap.getIdentifier());
+//
+//                        while (edges_i.hasNext()) {
+//                            Edge edge = (Edge) edges_i.next();
+//                            if (edge.getSource().equals(edge.getTarget())) {
+//                                EdgeView edgeView = thematicMapView.getEdgeView(edge);
+//                                thematicMapView.hideGraphObject(edgeView);
+//                            }
+//                        }
+//                        thematicMapView.updateView();
+//
+//                    }
+//
+//                    dispose();
+//                }               
+//            }
+//        }
     }
 
     private void initComponents() {
@@ -697,67 +688,68 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
 
         String[] emptyList = {};
 
-        // get the attributes
-        CyAttributes attributes = Cytoscape.getEdgeAttributes();
-
-        // if there aren't any attributes, return an empty list
-        if (attributes == null) {
-            return emptyList;
-        } else {
-
-            // / get the list of attributes in a String array. If the array
-            // is null or empty, return an empty list
-            String attributeNames[] = attributes.getAttributeNames();
-
-            // get the list of numerical attributes (integer or double)
-            Set<String> numericalAttributes = new HashSet<String>();
-
-            if (attributeNames == null || attributeNames.length == 0) {
-                return emptyList;
-            } else {
-                for (String attributeName: attributeNames) {
-                    Byte type = attributes.getType(attributeName);
-                    if (type.equals(CyAttributes.TYPE_INTEGER) || type.equals(CyAttributes.TYPE_FLOATING)) {
-                        numericalAttributes.add(attributeName);
-                    }
-
-                }
-                int numNumericalAttributes = numericalAttributes.size();
-                if (numNumericalAttributes > 0) {
-
-                    String[] numericalAttributesArray = new String [numNumericalAttributes];
-
-                    return numericalAttributes.toArray(numericalAttributesArray);
-                }
-                else {
-                    return emptyList;
-                }
-            }
-
-        }
-
+//        // get the attributes
+//        CyAttributes attributes = Cytoscape.getEdgeAttributes();
+//
+//        // if there aren't any attributes, return an empty list
+//        if (attributes == null) {
+//            return emptyList;
+//        } else {
+//
+//            // / get the list of attributes in a String array. If the array
+//            // is null or empty, return an empty list
+//            String attributeNames[] = attributes.getAttributeNames();
+//
+//            // get the list of numerical attributes (integer or double)
+//            Set<String> numericalAttributes = new HashSet<String>();
+//
+//            if (attributeNames == null || attributeNames.length == 0) {
+//                return emptyList;
+//            } else {
+//                for (String attributeName: attributeNames) {
+//                    Byte type = attributes.getType(attributeName);
+//                    if (type.equals(CyAttributes.TYPE_INTEGER) || type.equals(CyAttributes.TYPE_FLOATING)) {
+//                        numericalAttributes.add(attributeName);
+//                    }
+//
+//                }
+//                int numNumericalAttributes = numericalAttributes.size();
+//                if (numNumericalAttributes > 0) {
+//
+//                    String[] numericalAttributesArray = new String [numNumericalAttributes];
+//
+//                    return numericalAttributes.toArray(numericalAttributesArray);
+//                }
+//                else {
+//                    return emptyList;
+//                }
+//            }
+//
+//        }
+return emptyList;
     }
 
     private String[] getAttributes() {
 
         String[] emptyList = {};
-
-        // get the attributes
-        CyAttributes attributes = Cytoscape.getNodeAttributes();
-
-        // if there aren't any attributes, call getNewNoAttributesMenuItem()
-        if (attributes == null) {
-            return emptyList;
-        } else {
-            // get the list of attributes in a String array. If the array
-            // is null or empty, call getNewNoAttributesMenuItem()
-            String attributeNames[] = attributes.getAttributeNames();
-            if (attributeNames == null || attributeNames.length == 0) {
-                return emptyList;
-            } else {
-                return attributeNames;
-            }
-
-        }
+//
+//        // get the attributes
+//        CyAttributes attributes = Cytoscape.getNodeAttributes();
+//
+//        // if there aren't any attributes, call getNewNoAttributesMenuItem()
+//        if (attributes == null) {
+//            return emptyList;
+//        } else {
+//            // get the list of attributes in a String array. If the array
+//            // is null or empty, call getNewNoAttributesMenuItem()
+//            String attributeNames[] = attributes.getAttributeNames();
+//            if (attributeNames == null || attributeNames.length == 0) {
+//                return emptyList;
+//            } else {
+//                return attributeNames;
+//            }
+//
+//        }
+        return emptyList;
     }
 }
