@@ -9,11 +9,11 @@ package org.ccbr.bader.yeast.statistics;
  */
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 import org.cytoscape.model.CyNode;
 
@@ -23,7 +23,7 @@ public class ShuffleThread implements Runnable {
     List<CyNode> sourceList;
     List<CyNode> targetList;
     List<String> edgeTypeList;
-    Map<CyNode, Set<Object>> nodeToAttValueMap;       // map of att values associated with each input node
+    Map<CyNode, Collection<?>> nodeToAttValueMap;       // map of att values associated with each input node
     Map<Object, Integer> attValueToIndexMap;  // map of attribute values and their index in the list
     Random gen;
 
@@ -34,7 +34,7 @@ public class ShuffleThread implements Runnable {
     int trials;
     String name;
 
-    public ShuffleThread(String name, int trials, long generatorSeed, List<CyNode> sourceList, List<CyNode> targetList, List<String> edgeTypeList, Map<CyNode, Set<Object>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap, List<Map<String,int[][]>> allRandomizedMaps, Map<String,List<int[][]>> allRandomizedMaps2) {
+    public ShuffleThread(String name, int trials, long generatorSeed, List<CyNode> sourceList, List<CyNode> targetList, List<String> edgeTypeList, Map<CyNode, Collection<?>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap, List<Map<String,int[][]>> allRandomizedMaps, Map<String,List<int[][]>> allRandomizedMaps2) {
         this.trials = trials;
         this.name = name;
 
@@ -100,7 +100,7 @@ public class ShuffleThread implements Runnable {
         return randomizedArray;
     }
 
-    private Map<String, int[][]> createThemeMapEdgeMatrices(List<CyNode> sources, List<CyNode> targets, List<String> types, Map<CyNode, Set<Object>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap) {
+    private Map<String, int[][]> createThemeMapEdgeMatrices(List<CyNode> sources, List<CyNode> targets, List<String> types, Map<CyNode, Collection<?>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap) {
 
         int numAttributes = attValueToIndexMap.size();
         Map<String,int[][]> edgeTypeToThemeMap = new HashMap<String, int[][]>();
@@ -119,8 +119,8 @@ public class ShuffleThread implements Runnable {
                 themeMapEdges = new int[numAttributes][numAttributes];
             }
 
-            Set<Object> sourceAttributes = nodeToAttValueMap.get(source);
-            Set<Object> targetAttributes = nodeToAttValueMap.get(target);
+            Collection<?> sourceAttributes = nodeToAttValueMap.get(source);
+            Collection<?> targetAttributes = nodeToAttValueMap.get(target);
 
             for (Object sourceAttribute : sourceAttributes) {
                 for (Object targetAttribute : targetAttributes) {

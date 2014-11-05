@@ -55,18 +55,11 @@
 						<Xmaxerrs>10000</Xmaxerrs>
 					</compilerArguments>
 					<excludes>
-					  	<exclude>org/ccbr/bader/yeast/ThematicMap.java</exclude>
-						<exclude>org/ccbr/bader/yeast/ThematicMapFunctionPrototype.java</exclude>
-						<exclude>org/ccbr/bader/yeast/ThematicMapMenu.java</exclude>
-						<exclude>org/ccbr/bader/yeast/ThemeMapVisualStyle.java</exclude>
-						<exclude>org/ccbr/bader/yeast/TMUtil.java</exclude>
-						<exclude>org/ccbr/bader/yeast/ThematicMapPlugin.java</exclude>
-					  
-					  	<exclude>org/ccbr/bader/yeast/statistics/CalcZScoreThread.java</exclude>
-					  	<exclude>org/ccbr/bader/yeast/statistics/HyperGeomProbabilityStatistic.java</exclude>
-						<exclude>org/ccbr/bader/yeast/statistics/NetworkShuffleStatistic.java</exclude>
-						<exclude>org/ccbr/bader/yeast/statistics/NetworkShuffleStatisticMultiThreaded.java</exclude>
-					</excludes>
+					  <exclude>org/ccbr/bader/yeast/ThematicMapPlugin.java</exclude>
+					  <exclude>org/ccbr/bader/yeast/ThematicMapMenu.java</exclude>
+					  <exclude>org/ccbr/bader/yeast/ThematicMapFunctionPrototype.java</exclude>
+					  <exclude>org/ccbr/bader/yeast/ThemeMapVisualStyle.java</exclude>
+				    </excludes>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -92,11 +85,19 @@
 						<Bundle-Activator>${bundle.namespace}.CyActivator</Bundle-Activator>
 						
 						<Import-Package>!com.google.inject.internal.asm.util,*</Import-Package>
-						<Embed-Dependency>guice,peaberry,javax.inject,aopalliance</Embed-Dependency>
+						<Embed-Dependency>guice,peaberry,javax.inject,aopalliance,guice-assistedinject</Embed-Dependency>
 						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>
+			<plugin>
+		        <groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-eclipse-plugin</artifactId>
+		        <configuration>
+		          <downloadSources>false</downloadSources>
+		          <downloadJavadocs>true</downloadJavadocs>
+		        </configuration>
+		   </plugin>
 		</plugins>
 	</build>
 
@@ -128,12 +129,15 @@
 
 	<!-- Dependencies needed to compile this project. -->
 	<dependencies>
+	
+		<!-- OSGi -->
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.core</artifactId>
 			<version>4.2.0</version>
 		</dependency>
 		
+		<!-- Cytoscape -->
 		<dependency>
 			<groupId>org.cytoscape</groupId>
 			<artifactId>service-api</artifactId>
@@ -154,6 +158,17 @@
 			<artifactId>swing-application-api</artifactId>
 			<version>3.1.0</version>
 		</dependency>
+		<dependency>
+			<groupId>org.cytoscape</groupId>
+			<artifactId>vizmap-api</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.cytoscape</groupId>
+		    <artifactId>layout-api</artifactId>
+		    <version>3.1.0</version>
+		</dependency>
+		
 		
 		<!-- Dependency Injection -->
 		<dependency>
@@ -162,10 +177,23 @@
 			<version>3.0</version>
 		</dependency>
 		<dependency>
-	      <groupId>org.ops4j</groupId>
-	      <artifactId>peaberry</artifactId>
-	      <version>1.1.1</version>
+	        <groupId>org.ops4j</groupId>
+	        <artifactId>peaberry</artifactId>
+	        <version>1.1.1</version>
 	    </dependency>
+	    <dependency>
+			<groupId>com.google.inject.extensions</groupId>
+			<artifactId>guice-assistedinject</artifactId>
+			<version>3.0</version>
+		</dependency>
+	    
+
+		<!-- Other -->
+		<dependency>
+			<groupId>colt</groupId>
+			<artifactId>colt</artifactId>
+			<version>1.2.0</version>
+		</dependency>
 
 	</dependencies>
 

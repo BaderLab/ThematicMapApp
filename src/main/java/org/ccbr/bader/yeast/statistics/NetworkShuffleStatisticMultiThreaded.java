@@ -1,42 +1,44 @@
 package org.ccbr.bader.yeast.statistics;
 
-import cytoscape.CyNetwork;
-import cytoscape.Cytoscape;
-import cytoscape.task.ui.JTaskConfig;
-import cytoscape.task.util.TaskManager;
-import cytoscape.task.Task;
-import cytoscape.task.TaskMonitor;
-import cytoscape.data.CyAttributes;
-import cytoscape.data.Semantics;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
-import org.ccbr.bader.yeast.TMUtil;
 import org.ccbr.bader.yeast.TM;
-import giny.model.Node;
-import giny.model.Edge;
+import org.ccbr.bader.yeast.TMUtil;
+import org.cytoscape.model.CyEdge;
+import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyNode;
+
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
+
 
 public class NetworkShuffleStatisticMultiThreaded {
 
-    private CyNetwork originalNetwork;
-    private CyNetwork themeNetwork;
+    private final CyNetwork originalNetwork;
+    private final CyNetwork themeNetwork;
+    
     private String attName;
     private int trials;
     private boolean outputToFile;
     private File shuffleDirectory;
-
-    private static final CyAttributes edgeAtt = Cytoscape.getEdgeAttributes();
-    private static final CyAttributes nodeAtt = Cytoscape.getNodeAttributes();
 
     private Integer[] finalFlags;
 
     private static int NUMPROCESSORS = 8;
 
 
-    public NetworkShuffleStatisticMultiThreaded(CyNetwork originalNetwork, CyNetwork themeNetwork) {
+    @Inject
+    public NetworkShuffleStatisticMultiThreaded(@Assisted("originalNetwork") CyNetwork originalNetwork, @Assisted("themeNetwork") CyNetwork themeNetwork) {
         this.originalNetwork = originalNetwork;
         this.themeNetwork = themeNetwork;
     }
@@ -46,8 +48,6 @@ public class NetworkShuffleStatisticMultiThreaded {
         this.attName = attName;
         this.trials = trials;
         this.shuffleDirectory = shuffleDirectory;
-
-        byte attType = TMUtil.getNodeAttType(attName);
 
         finalFlags = null;
 
@@ -81,18 +81,16 @@ public class NetworkShuffleStatisticMultiThreaded {
 
         // loop through edges in the original network, and store sources, targets and types in lists
         int edgeCount = originalNetwork.getEdgeCount();
-        List<Node> sourceList = new ArrayList<Node>(edgeCount);
-        List<Node> targetList = new ArrayList<Node>(edgeCount);
+        List<CyNode> sourceList = new ArrayList<CyNode>(edgeCount);
+        List<CyNode> targetList = new ArrayList<CyNode>(edgeCount);
         List<String> edgeTypeList = new ArrayList<String>(edgeCount);
         Set<String> edgeTypeValues = new HashSet<String>();
 
-        Iterator orig_edges_i = originalNetwork.edgesIterator();
-        while (orig_edges_i.hasNext()) {
-            Edge edge = (Edge) orig_edges_i.next();
-
-            Node sourceNode = edge.getSource();
-            Node targetNode = edge.getTarget();
-            String edgeType = edgeAtt.getStringAttribute(edge.getIdentifier(), Semantics.INTERACTION);
+        for(CyEdge edge : originalNetwork.getEdgeList()) {
+            CyNode sourceNode = edge.getSource();
+            CyNode targetNode = edge.getTarget();
+            
+            String edgeType = themeNetwork.getRow(edge).get(CyEdge.INTERACTION, String.class);
 
             sourceList.add(sourceNode);
             targetList.add(targetNode);
@@ -104,13 +102,11 @@ public class NetworkShuffleStatisticMultiThreaded {
         Set<Object> allAttValues = new HashSet<Object>();
 
         // map of att values associated with each input node
-        Map<Node, Set<Object>> nodeToAttValueMap = new HashMap<Node, Set<Object>>();
+        Map<CyNode, Collection<?>> nodeToAttValueMap = new HashMap<CyNode, Collection<?>>();
 
         // loop through nodes in the original network and store attributes for each node
-        Iterator nodes_i = originalNetwork.nodesIterator();
-        while (nodes_i.hasNext()) {
-            Node node = (Node) nodes_i.next();
-            Set<Object> attVals = getAttValues(node, attType);
+        for(CyNode node : originalNetwork.getNodeList()) {
+            Collection<?> attVals = TMUtil.getAttValues(originalNetwork, node, attName);
 
             // add attribute values for this node to set of all attribute values
             if (attVals != null && !attVals.isEmpty()) {
@@ -182,18 +178,15 @@ public class NetworkShuffleStatisticMultiThreaded {
 
 
         // loop through edges in theme map network and add Z score as edge attribute
-        Iterator tm_edges_i = themeNetwork.edgesIterator();
-        while (tm_edges_i.hasNext()) {
-            Edge edge = (Edge) tm_edges_i.next();
-
-            String edgeType = edgeAtt.getStringAttribute(edge.getIdentifier(),Semantics.INTERACTION);
+        for(CyEdge edge : themeNetwork.getEdgeList()) {
+            String edgeType = themeNetwork.getRow(edge).get(CyEdge.INTERACTION, String.class);
             int index = edgeType.lastIndexOf("_tt");
             String originalEdgeType = edgeType.substring(0,index);
 
             double[][] zScoreEdges = edgeTypeToZScoreMap.get(originalEdgeType);
 
-            Node source = edge.getSource();
-            Node target = edge.getTarget();
+            CyNode source = edge.getSource();
+            CyNode target = edge.getTarget();
 
 
             //int sourceIndex = allAttValuesList.indexOf(source.getIdentifier());
@@ -204,10 +197,10 @@ public class NetworkShuffleStatisticMultiThreaded {
 
             // loop through list of all attributes to find index of source and target attributes
             for (int attIndex=0; attIndex<numAttributes; attIndex++) {
-                if (allAttValuesList.get(attIndex).toString().equals(source.getIdentifier())) {
+                if (allAttValuesList.get(attIndex).toString().equals(source.getSUID().toString())) {
                     sourceIndex = attIndex;
                 }
-                if (allAttValuesList.get(attIndex).toString().equals(target.getIdentifier())) {
+                if (allAttValuesList.get(attIndex).toString().equals(target.getSUID().toString())) {
                     targetIndex = attIndex;
                 }
 
@@ -223,9 +216,8 @@ public class NetworkShuffleStatisticMultiThreaded {
             double absVal = Math.abs(zScoreEdges[row][col]);
             double roundedVal = (Math.round(absVal*100))/100.0;
 
-            edgeAtt.setAttribute(edge.getIdentifier(), TM.edgeStatisticAttName, roundedVal);
-            edgeAtt.setAttribute(edge.getIdentifier(),TM.edgeStatisticTypeAttName, "SHUFFLE");
-
+            themeNetwork.getRow(edge).set(TM.edgeStatisticAttName, roundedVal);
+            themeNetwork.getRow(edge).set(TM.edgeStatisticTypeAttName, "SHUFFLE");
 
             //edgeAtt.setAttribute(edge.getIdentifier(), "ThemeMapper.Z_SCORE", zScoreEdges[row][col]);
 
@@ -234,47 +226,10 @@ public class NetworkShuffleStatisticMultiThreaded {
 
     }
 
-    private Set<Object> getAttValues(Node node, Byte attType) {
 
-        Set<Object> attValues = new HashSet<Object>();
-
-        if (attType == CyAttributes.TYPE_SIMPLE_LIST) {
-            List attValList = nodeAtt.getListAttribute(node.getIdentifier(), attName);
-            for (Object attVal: attValList) {
-                if (attVal!=null) {
-                    attValues.add(attVal);
-                }
-            }
-        }
-        else {
-            Object attVal = null;
-            if (attType == CyAttributes.TYPE_STRING) {
-                attVal = nodeAtt.getStringAttribute(node.getIdentifier(), attName);
-            }
-            else if (attType == CyAttributes.TYPE_BOOLEAN) {
-                attVal = nodeAtt.getBooleanAttribute(node.getIdentifier(), attName);
-            }
-            else if (attType == CyAttributes.TYPE_INTEGER) {
-                attVal = nodeAtt.getIntegerAttribute(node.getIdentifier(), attName);
-            }
-            else if (attType == CyAttributes.TYPE_FLOATING) {
-                attVal = nodeAtt.getDoubleAttribute(node.getIdentifier(), attName);
-            }
-            else {
-                throw new RuntimeException ("Unsupported theme attribute type '" + Integer.valueOf(attType) + "'.");
-            }
-
-            if (attVal != null) {
-                attValues.add(attVal);
-            }
-        }
-
-        return attValues;
-    }
-
-    private List<Node> randomizeList(List<Node> originalList) {
-        List<Node> randomizedArray = new ArrayList<Node>();
-        List<Node> tempList = new ArrayList<Node>(originalList);
+    private List<CyNode> randomizeList(List<CyNode> originalList) {
+        List<CyNode> randomizedArray = new ArrayList<CyNode>();
+        List<CyNode> tempList = new ArrayList<CyNode>(originalList);
 
         int numElements = originalList.size();
 
@@ -288,15 +243,15 @@ public class NetworkShuffleStatisticMultiThreaded {
         return randomizedArray;
     }
 
-    private Map<String, int[][]> createThemeMapEdgeMatrices(List<Node> sources, List<Node> targets, List<String> types, Map<Node, Set<Object>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap) {
+    private Map<String, int[][]> createThemeMapEdgeMatrices(List<CyNode> sources, List<CyNode> targets, List<String> types, Map<CyNode, Collection<?>> nodeToAttValueMap, Map<Object, Integer> attValueToIndexMap) {
 
         int numAttributes = attValueToIndexMap.size();
         Map<String,int[][]> edgeTypeToThemeMap = new HashMap<String, int[][]>();
 
         // loop through edges
         for (int i = 0; i < sources.size(); i++) {
-            Node source = sources.get(i);
-            Node target = targets.get(i);
+        	CyNode source = sources.get(i);
+        	CyNode target = targets.get(i);
             String type = types.get(i);
 
             int[][] themeMapEdges;
@@ -307,8 +262,8 @@ public class NetworkShuffleStatisticMultiThreaded {
                 themeMapEdges = new int[numAttributes][numAttributes];
             }
 
-            Set<Object> sourceAttributes = nodeToAttValueMap.get(source);
-            Set<Object> targetAttributes = nodeToAttValueMap.get(target);
+            Collection<?> sourceAttributes = nodeToAttValueMap.get(source);
+            Collection<?> targetAttributes = nodeToAttValueMap.get(target);
 
             for (Object sourceAttribute : sourceAttributes) {
                 for (Object targetAttribute : targetAttributes) {

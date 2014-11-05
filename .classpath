@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="org/ccbr/bader/yeast/ThematicMap.java|org/ccbr/bader/yeast/ThematicMapFunctionPrototype.java|org/ccbr/bader/yeast/ThematicMapMenu.java|org/ccbr/bader/yeast/ThemeMapVisualStyle.java|org/ccbr/bader/yeast/TMUtil.java|org/ccbr/bader/yeast/ThematicMapPlugin.java|org/ccbr/bader/yeast/statistics/CalcZScoreThread.java|org/ccbr/bader/yeast/statistics/HyperGeomProbabilityStatistic.java|org/ccbr/bader/yeast/statistics/NetworkShuffleStatistic.java|org/ccbr/bader/yeast/statistics/NetworkShuffleStatisticMultiThreaded.java" kind="src" output="target/classes" path="src/main/java">
+	<classpathentry excluding="org/ccbr/bader/yeast/ThematicMapPlugin.java|org/ccbr/bader/yeast/ThematicMapMenu.java|org/ccbr/bader/yeast/ThematicMapFunctionPrototype.java|org/ccbr/bader/yeast/ThemeMapVisualStyle.java" kind="src" output="target/classes" path="src/main/java">
 		<attributes>
 			<attribute name="optional" value="true"/>
 			<attribute name="maven.pomderived" value="true"/>

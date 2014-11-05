@@ -34,25 +34,10 @@
 package org.ccbr.bader.yeast;
 
 import java.awt.Color;
-import java.awt.Shape;
-import java.util.List;
-import java.util.Iterator;
-import java.util.HashSet;
-import java.util.Set;
 
-import giny.model.Edge;
-import giny.model.Node;
-import cytoscape.CyNetwork;
-import cytoscape.Cytoscape;
-import cytoscape.data.CyAttributes;
-import cytoscape.visual.EdgeAppearance;
-import cytoscape.visual.EdgeAppearanceCalculator;
-import cytoscape.visual.GlobalAppearanceCalculator;
-import cytoscape.visual.LineType;
-import cytoscape.visual.NodeAppearance;
-import cytoscape.visual.NodeAppearanceCalculator;
-import cytoscape.visual.ShapeNodeRealizer;
-import cytoscape.visual.VisualStyle;
+import org.cytoscape.model.CyNetwork;
+import org.cytoscape.view.vizmap.VisualStyle;
+
 
 public class ThemeMapVisualStyle extends VisualStyle {
 

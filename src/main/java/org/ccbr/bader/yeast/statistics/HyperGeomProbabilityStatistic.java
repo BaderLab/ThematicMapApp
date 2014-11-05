@@ -1,59 +1,50 @@
 package org.ccbr.bader.yeast.statistics;
 
-import cytoscape.CyNetwork;
-import cytoscape.Cytoscape;
-import cytoscape.data.CyAttributes;
-import cytoscape.data.Semantics;
-import org.ccbr.bader.yeast.TMUtil;
+import java.util.Collection;
+
 import org.ccbr.bader.yeast.TM;
+import org.ccbr.bader.yeast.TMUtil;
+import org.cytoscape.model.CyEdge;
+import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyNode;
 
-import java.util.*;
+import cern.jet.stat.Gamma;
 
-import java.math.BigDecimal;
-
-import giny.model.Node;
-import giny.model.Edge;
-
-import cern.jet.stat.*;
-import java.math.*;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 
 public class HyperGeomProbabilityStatistic {
 
-    private CyNetwork originalNetwork;
-    private CyNetwork themeNetwork;
-
-    private static final CyAttributes edgeAtt = Cytoscape.getEdgeAttributes();
-    private static final CyAttributes nodeAtt = Cytoscape.getNodeAttributes();
+    private final CyNetwork originalNetwork;
+    private final CyNetwork themeNetwork;
 
 
-    public HyperGeomProbabilityStatistic(CyNetwork originalNetwork, CyNetwork themeNetwork) {
+    @Inject
+    public HyperGeomProbabilityStatistic(@Assisted("originalNetwork") CyNetwork originalNetwork, @Assisted("themeNetwork") CyNetwork themeNetwork) {
         this.originalNetwork = originalNetwork;
         this.themeNetwork = themeNetwork;
     }
 
     public void getStatistics(String attName, boolean cumulative) {
-
-        // loop through each edge in the thematic map, and for each edge, calculate the probability
-        Iterator themeMapEdges_i = themeNetwork.edgesIterator();
-
         int nodeCount = originalNetwork.getNodeCount();
 
-        while (themeMapEdges_i.hasNext()) {
-            Edge themeMapEdge = (Edge) themeMapEdges_i.next();
+        // loop through each edge in the thematic map, and for each edge, calculate the probability
+        for(CyEdge themeMapEdge : themeNetwork.getEdgeList()) {
 
             // get edge type from theme map edge type
-            String themeEdgeType = edgeAtt.getStringAttribute(themeMapEdge.getIdentifier(),Semantics.INTERACTION);
+            String themeEdgeType = themeNetwork.getRow(themeMapEdge).get(CyEdge.INTERACTION, String.class);
+            
             int index = themeEdgeType.lastIndexOf("_tt");
             String originalEdgeType = themeEdgeType.substring(0,index);
 
 
-            Node themeSource = themeMapEdge.getSource();
-            Node themeTarget = themeMapEdge.getTarget();
+            CyNode themeSource = themeMapEdge.getSource();
+            CyNode themeTarget = themeMapEdge.getTarget();
 
-            String att1 = themeSource.getIdentifier();
-            String att2 = themeTarget.getIdentifier();
+            Long att1 = themeSource.getSUID(); //getIdentifier();
+            Long att2 = themeTarget.getSUID(); //getIdentifier();
 
-            byte attType = TMUtil.getNodeAttType(attName);
+            //byte attType = TMUtil.getNodeAttType(attName);
 
             // Loop through nodes in the original network, and determine how many nodes have attribute 1,
             // how many have att2 and how many have both.
@@ -61,18 +52,13 @@ public class HyperGeomProbabilityStatistic {
             int countAtt2 = 0;
             int countAtt1and2 = 0;
 
-            Iterator nodes_i = originalNetwork.nodesIterator();
-            while (nodes_i.hasNext()) {
-                Node node = (Node) nodes_i.next();
-
-                Set<Object> attVals = getAttValues(node, attName, attType);
+            for(CyNode node : originalNetwork.getNodeList()) {
+                Collection<?> attVals = TMUtil.getAttValues(originalNetwork, node, attName);
 
                 boolean hasAtt1 = false;
                 boolean hasAtt2 = false;
 
-                Iterator<Object> valsIt = attVals.iterator();
-                while (valsIt.hasNext()) {
-                    Object val = valsIt.next();
+                for(Object val : attVals) {
                     if (val.toString().equals(att1)) {
                         hasAtt1 = true;
                     }
@@ -114,27 +100,22 @@ public class HyperGeomProbabilityStatistic {
             int totalEdges = 0;
             int att1att2Edges = 0;
 
-            Iterator edges_i = originalNetwork.edgesIterator();
-            while (edges_i.hasNext()) {
-                Edge edge = (Edge) edges_i.next();
-
-                String edgeType = edgeAtt.getStringAttribute(edge.getIdentifier(),Semantics.INTERACTION);
+            for(CyEdge edge : originalNetwork.getEdgeList()) {
+            	String edgeType = themeNetwork.getRow(edge).get(CyEdge.INTERACTION, String.class);
                 if (!edgeType.equals(originalEdgeType)) {
                     continue;
                 }
 
-                Node source = edge.getSource();
-                Node target = edge.getTarget();
+                CyNode source = edge.getSource();
+                CyNode target = edge.getTarget();
 
-                Set<Object> sourceAttVals = getAttValues(source, attName, attType);
-                Set<Object> targetAttVals = getAttValues(target, attName, attType);
+                Collection<?> sourceAttVals = TMUtil.getAttValues(originalNetwork, source, attName);
+                Collection<?> targetAttVals = TMUtil.getAttValues(originalNetwork, target, attName);
 
                 boolean sourceHasAtt1 = false;
                 boolean sourceHasAtt2 = false;
 
-                Iterator<Object> sourceValsIt = sourceAttVals.iterator();
-                while (sourceValsIt.hasNext()) {
-                    Object val = sourceValsIt.next();
+                for(Object val : sourceAttVals) {
                     if (val.toString().equals(att1)) {
                         sourceHasAtt1 = true;
                     }
@@ -149,9 +130,7 @@ public class HyperGeomProbabilityStatistic {
                 boolean targetHasAtt1 = false;
                 boolean targetHasAtt2 = false;
 
-                Iterator<Object> targetValsIt = targetAttVals.iterator();
-                while (targetValsIt.hasNext()) {
-                    Object val = targetValsIt.next();
+                for(Object val : targetAttVals) {
                     if (val.toString().equals(att1)) {
                         targetHasAtt1 = true;
                     }
@@ -196,57 +175,18 @@ public class HyperGeomProbabilityStatistic {
             double probability;
             if (cumulative) {
                 probability = 1 - calculateCumulativeHypergDistr(att1att2Edges, totalEdges, k, N);
-                edgeAtt.setAttribute(themeMapEdge.getIdentifier(), TM.edgeStatisticTypeAttName, "CUMULATIVE HYPERGEOMETRIC");
+                themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName, "CUMULATIVE HYPERGEOMETRIC");
             }
             else {
                 probability = 1 - calculateHypergDistr(att1att2Edges, totalEdges, k, N);
-                edgeAtt.setAttribute(themeMapEdge.getIdentifier(), TM.edgeStatisticTypeAttName, "HYPERGEOMETRIC");
+                themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName, "HYPERGEOMETRIC");
 
             }
             double roundedVal = (Math.round(probability*100))/100.0;
 
-            edgeAtt.setAttribute(themeMapEdge.getIdentifier(),TM.edgeStatisticAttName, roundedVal);
-
+            themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName, roundedVal);
         }
 
-    }
-
-    private Set<Object> getAttValues(Node node, String attName, Byte attType) {
-
-        Set<Object> attValues = new HashSet<Object>();
-
-        if (attType == CyAttributes.TYPE_SIMPLE_LIST) {
-            List attValList = nodeAtt.getListAttribute(node.getIdentifier(), attName);
-            for (Object attVal: attValList) {
-                if (attVal!=null) {
-                    attValues.add(attVal);
-                }
-            }
-        }
-        else {
-            Object attVal = null;
-            if (attType == CyAttributes.TYPE_STRING) {
-                attVal = nodeAtt.getStringAttribute(node.getIdentifier(), attName);
-            }
-            else if (attType == CyAttributes.TYPE_BOOLEAN) {
-                attVal = nodeAtt.getBooleanAttribute(node.getIdentifier(), attName);
-            }
-            else if (attType == CyAttributes.TYPE_INTEGER) {
-                attVal = nodeAtt.getIntegerAttribute(node.getIdentifier(), attName);
-            }
-            else if (attType == CyAttributes.TYPE_FLOATING) {
-                attVal = nodeAtt.getDoubleAttribute(node.getIdentifier(), attName);
-            }
-            else {
-                throw new RuntimeException ("Unsupported theme attribute type '" + Integer.valueOf(attType) + "'.");
-            }
-
-            if (attVal != null) {
-                attValues.add(attVal);
-            }
-        }
-
-        return attValues;
     }
 
 
