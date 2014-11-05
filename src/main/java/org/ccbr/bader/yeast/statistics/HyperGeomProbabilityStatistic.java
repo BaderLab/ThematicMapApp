@@ -175,16 +175,16 @@ public class HyperGeomProbabilityStatistic {
             double probability;
             if (cumulative) {
                 probability = 1 - calculateCumulativeHypergDistr(att1att2Edges, totalEdges, k, N);
-                themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName, "CUMULATIVE HYPERGEOMETRIC");
+                themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName.name, "CUMULATIVE HYPERGEOMETRIC");
             }
             else {
                 probability = 1 - calculateHypergDistr(att1att2Edges, totalEdges, k, N);
-                themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName, "HYPERGEOMETRIC");
+                themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName.name, "HYPERGEOMETRIC");
 
             }
             double roundedVal = (Math.round(probability*100))/100.0;
 
-            themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName, roundedVal);
+            themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName.name, roundedVal);
         }
 
     }

@@ -33,20 +33,51 @@
  */
 package org.ccbr.bader.yeast;
 
-/**Aggregates global variables and constants for plugin as static fields  
- * @author mikematan
- *
- */
-public class TM {
+import org.cytoscape.model.CyEdge;
+import org.cytoscape.model.CyIdentifiable;
+import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyNode;
+import org.cytoscape.model.CyTable;
 
-	public static final String memberListAttName = "ThemeMapper.THEME_MEMBERS";
-	public static final String edgeSourceAttName = "ThemeMapper.INPUT_EDGES";
-	public static final String theme_member_count_att_name = "ThemeMapper.THEME_MEMBER_COUNT";
-    public static final String edgeSourceMemberCountAttName = "ThemeMapper.INPUT_EDGES_COUNT";
-    public static final String edgeStatisticAttName = "ThemeMapper.EDGE_STATISTIC";
-    public static final String edgeStatisticTypeAttName = "ThemeMapper.EDGE_STATISTIC_TYPE";
-    public static final String edgeWeightListAttName = "ThemeMapper.EDGE_WEIGHT_LIST";
-    public static final String avgEdgeWeightAttName = "ThemeMapper.AVERAGE_EDGE_WEIGHT";
-    public static final String formattedNameAttributeName = "ThemeMapper.FORMATTED_NAME";
+/**
+ * Defines the columns that are needed for a ThematicMap.
+ */
+public enum TM {
+
+	// input network (why?)
+	edgeSourceMemberCountAttName("ThemeMapper.INPUT_EDGES_COUNT", CyEdge.class, false, Integer.class),
+    edgeStatisticAttName("ThemeMapper.EDGE_STATISTIC", CyEdge.class, false, Double.class),
+    edgeStatisticTypeAttName("ThemeMapper.EDGE_STATISTIC_TYPE", CyEdge.class, false, String.class),
+	memberListAttName("ThemeMapper.THEME_MEMBERS", CyNode.class, true, String.class),
+	edgeSourceAttName("ThemeMapper.INPUT_EDGES", CyEdge.class, true, String.class),
+	theme_member_count_att_name("ThemeMapper.THEME_MEMBER_COUNT", CyNode.class, false, Integer.class),
+    edgeWeightListAttName("ThemeMapper.EDGE_WEIGHT_LIST", CyEdge.class, true, Double.class),
+    avgEdgeWeightAttName("ThemeMapper.AVERAGE_EDGE_WEIGHT", CyEdge.class, false, Double.class),
+    formattedNameAttributeName("ThemeMapper.FORMATTED_NAME", CyNode.class, false, String.class);
 	
+
+	public final Class<? extends CyIdentifiable> tableType;
+	public final String name;
+	public final boolean isList;
+	public final Class<?> type;
+	
+	
+	private TM(String name, Class<? extends CyIdentifiable> tableType, boolean isList, Class<?> type) {
+		this.tableType = tableType;
+		this.name = name;
+		this.isList = isList;
+		this.type = type;
+	}
+	
+	
+    public static void createColumns(CyNetwork thematicMap) {
+    	for(TM tm : values()) {
+    		CyTable table = thematicMap.getTable(tm.tableType, CyNetwork.LOCAL_ATTRS);
+    		if(tm.isList)
+    			table.createListColumn(tm.name, tm.type, false);
+    		else
+    			table.createColumn(tm.name, tm.type, false);
+    	}
+    }
+    
 }

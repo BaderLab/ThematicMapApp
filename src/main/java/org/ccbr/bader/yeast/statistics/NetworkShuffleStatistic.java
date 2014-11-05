@@ -332,8 +332,8 @@ public class NetworkShuffleStatistic {
 //            edgeAtt.setAttribute(edge.getIdentifier(),TM.edgeStatisticAttName, roundedVal);
 //            edgeAtt.setAttribute(edge.getIdentifier(),TM.edgeStatisticTypeAttName, "SHUFFLE");
 
-            themeNetwork.getRow(edge).set(TM.edgeStatisticAttName, roundedVal);
-            themeNetwork.getRow(edge).set(TM.edgeStatisticTypeAttName, "SHUFFLE");
+            themeNetwork.getRow(edge).set(TM.edgeStatisticAttName.name, roundedVal);
+            themeNetwork.getRow(edge).set(TM.edgeStatisticTypeAttName.name, "SHUFFLE");
             
             //edgeAtt.setAttribute(edge.getIdentifier(), "ThemeMapper.Z_SCORE", zScoreEdges[row][col]);
             

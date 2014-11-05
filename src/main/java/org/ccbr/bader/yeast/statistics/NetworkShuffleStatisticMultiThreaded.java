@@ -216,8 +216,8 @@ public class NetworkShuffleStatisticMultiThreaded {
             double absVal = Math.abs(zScoreEdges[row][col]);
             double roundedVal = (Math.round(absVal*100))/100.0;
 
-            themeNetwork.getRow(edge).set(TM.edgeStatisticAttName, roundedVal);
-            themeNetwork.getRow(edge).set(TM.edgeStatisticTypeAttName, "SHUFFLE");
+            themeNetwork.getRow(edge).set(TM.edgeStatisticAttName.name, roundedVal);
+            themeNetwork.getRow(edge).set(TM.edgeStatisticTypeAttName.name, "SHUFFLE");
 
             //edgeAtt.setAttribute(edge.getIdentifier(), "ThemeMapper.Z_SCORE", zScoreEdges[row][col]);
 

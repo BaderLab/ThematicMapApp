@@ -52,12 +52,12 @@ import org.cytoscape.model.CyRow;
 public class TMUtil {
 	
 	
-//	/**
-//	 * Return the String attribute value from the node table.
-//	 */
-//	public static String getStringAtt(CyNetwork network, CyNode node, String attName) {
-//		return network.getRow(node).get(attName, String.class);
-//	}
+	/**
+	 * Return the String attribute value from the node table.
+	 */
+	public static String getStringAtt(CyNetwork network, CyNode node, String attName) {
+		return network.getRow(node).get(attName, String.class);
+	}
 	
 	/**
 	 * Handles attributes that might be single or list in the same way.
@@ -161,7 +161,7 @@ public class TMUtil {
 //	}
 	
 	public static int getNumThemeMembers(CyNetwork themeNetwork, CyNode themeNode) {
-		List<String> themeMembers = themeNetwork.getRow(themeNode).getList(TM.memberListAttName, String.class);
+		List<String> themeMembers = themeNetwork.getRow(themeNode).getList(TM.memberListAttName.name, String.class);
 		if (themeMembers == null) return 0;
 		return themeMembers.size();
 	}
@@ -178,7 +178,7 @@ public class TMUtil {
 //	}
 
 	public static int getNumThemeMembers(CyNetwork themeNetwork, CyEdge themeEdge) {
-		List<String> themeMembers = themeNetwork.getRow(themeEdge).getList(TM.edgeSourceAttName, String.class);
+		List<String> themeMembers = themeNetwork.getRow(themeEdge).getList(TM.edgeSourceAttName.name, String.class);
 		if (themeMembers == null) return 0;
 		return themeMembers.size();
 	}

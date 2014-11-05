@@ -604,7 +604,7 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
                     }
 
                     if (includeSingleNodesCheckBox.isSelected()) {
-                        tmap.getSingleNodes(inputNetwork, thematicMap, attName, single_nodes, single_node_edges);
+//                        tmap.getSingleNodes(inputNetwork, thematicMap, attName, single_nodes, single_node_edges);
 
                     }
 
