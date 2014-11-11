@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -19,6 +18,7 @@ import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyNetworkFactory;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.model.CyNode;
+import org.cytoscape.model.CyRow;
 import org.cytoscape.view.layout.CyLayoutAlgorithm;
 import org.cytoscape.view.layout.CyLayoutAlgorithmManager;
 import org.cytoscape.view.model.CyNetworkView;
@@ -142,8 +142,10 @@ public class ThematicMap {
 		//iterate through the theme nodes, creating the THEME_MEMBER_COUNT attribute
 		for(CyNode themeNode : thematicMapNetwork.getNodeList()) {
 			int themeMemberCount = TMUtil.getNumThemeMembers(thematicMapNetwork, themeNode);
-			thematicMapNetwork.getRow(themeNode).set(TM.theme_member_count_att_name.name, themeMemberCount);
-			thematicMapNetwork.getRow(themeNode).set(TM.formattedNameAttributeName.name, formatName(themeNode.getSUID().toString()));
+			CyRow row = thematicMapNetwork.getRow(themeNode);
+			row.set(TM.theme_member_count_att_name.name, themeMemberCount);
+			String formattedName = formatName(row.get(CyNetwork.NAME, String.class));
+			row.set(TM.formattedNameAttributeName.name, formattedName);
         }
 
         // iterate through the theme edges, creating the INPUT_EDGES_COUNT attribute, the AVERAGE_EDGE_WEIGHT attribute,
@@ -364,15 +366,13 @@ public class ThematicMap {
 				CyNode sourceThemeNode = themeNameToThemeNode.get(sourceNodeTheme);
 				CyNode targetThemeNode = themeNameToThemeNode.get(targetNodeTheme);
 				
-//              CyNode sourceThemeNode = Cytoscape.getCyNode(sourceNodeTheme.toString());
-//              CyNode targetThemeNode = Cytoscape.getCyNode(targetNodeTheme.toString());
-                
-                
                 //TODO if we add a mode for capturing directedness, change directedness parameter in the following statements to 'true'
                 CyEdge themeEdge = TMUtil.getCyEdge(thematicGraph, sourceThemeNode, targetThemeNode, CyEdge.INTERACTION, interaction + "_tt");
                 //if the edge does not exist, create it.
                 if (themeEdge == null) {
                     themeEdge = thematicGraph.addEdge(sourceThemeNode, targetThemeNode, false);
+                    thematicGraph.getRow(themeEdge).set(CyEdge.INTERACTION, interaction + "_tt");
+                    thematicGraph.getRow(themeEdge).set(TM.edgeStatisticAttName.name, 0.0);
                 }
 
                 //recording the input edge's source and target nodes as an attribute of the theme edge
@@ -452,11 +452,6 @@ public class ThematicMap {
 //			                         LayoutTask.getDefaultTaskConfig() );
 
 		
-		Collection<CyLayoutAlgorithm> layouts = layoutAlgorithmManager.getAllLayouts();
-		for(CyLayoutAlgorithm alg : layouts) {
-			System.out.println(alg.getName());
-		}
-		
 		CyLayoutAlgorithm layout = layoutAlgorithmManager.getLayout("attribute-circle");
 		if(layout == null)
 			layout = layoutAlgorithmManager.getDefaultLayout();
@@ -521,7 +516,7 @@ public class ThematicMap {
             if (count<minEdgeWidthAtt) {
                 minEdgeWidthAtt = count;
             }
-            String type = network.getRow(edge).get("interaction", String.class);
+            String type = network.getRow(edge).get(CyEdge.INTERACTION, String.class);
             if (!edgeTypes.contains(type)) {
                 edgeTypes.add(type);
             }
@@ -542,46 +537,41 @@ public class ThematicMap {
         //  Continuous Mapping - set node size (max = 100, min = 10)
         ContinuousMapping<Integer,Double> cm = (ContinuousMapping<Integer,Double>)
         	functionFactoryContinuous.createVisualMappingFunction(TM.theme_member_count_att_name.name, Integer.class, BasicVisualLexicon.NODE_SIZE);
-        BoundaryRangeValues<Double> brv1 = new BoundaryRangeValues<Double>(10d, 10d, 10d);
-        BoundaryRangeValues<Double> brv2 = new BoundaryRangeValues<Double>(100d,100d,100d);
-        cm.addPoint(minMemberCount, brv1);
-        cm.addPoint(maxMemberCount, brv2);
+        cm.addPoint(minMemberCount, new BoundaryRangeValues<Double>(10d, 10d, 10d));
+        cm.addPoint(maxMemberCount, new BoundaryRangeValues<Double>(100d,100d,100d));
         visualStyle.addVisualMappingFunction(cm);
         
         // Discrete Mapping - set edge color
 		DiscreteMapping<String,Paint> dm = (DiscreteMapping<String,Paint>)
-			functionFactoryDiscrete.createVisualMappingFunction("interaction", String.class, BasicVisualLexicon.EDGE_PAINT);
-		Random gen = new Random();
-        Set<Color> allColors = new HashSet<Color>();
-        for (String type:edgeTypes) {
-            Color col = getRandomColor(gen);
-            while (allColors.contains(col)) {
-                col = getRandomColor(gen);
-            }
-            allColors.add(col);
-            dm.putMapValue(type, col);
+			functionFactoryDiscrete.createVisualMappingFunction(CyEdge.INTERACTION, String.class, BasicVisualLexicon.EDGE_STROKE_UNSELECTED_PAINT);
+		
+        ColorGenerator colorGenerator = new ColorGenerator();
+        for(String type : edgeTypes) {
+        	dm.putMapValue(type, colorGenerator.nextColor());
         }
         visualStyle.addVisualMappingFunction(dm);
 
         //  Continuous Mapping - set edge width (max = 10, min = 1)
-        String edgeWidthAttName = (edgeWidthType == EDGE_WIDTH_STATISTICS) ? TM.edgeStatisticAttName.name : TM.edgeSourceMemberCountAttName.name;
-        ContinuousMapping<Double,Double> cem = (ContinuousMapping<Double,Double>)
-        	functionFactoryContinuous.createVisualMappingFunction(edgeWidthAttName, Double.class, BasicVisualLexicon.EDGE_WIDTH);
-        BoundaryRangeValues<Double> edge_bv0 = new BoundaryRangeValues<Double>(1d, 1d, 1d);
-        BoundaryRangeValues<Double> edge_bv1 = new BoundaryRangeValues<Double>(10d,10d,10d);
-        cem.addPoint(minEdgeWidthAtt, edge_bv0);
-        cem.addPoint(maxEdgeWidthAtt, edge_bv1);
-
+        if(edgeWidthType == EDGE_WIDTH_STATISTICS) {
+        	 ContinuousMapping<Double,Double> cem = (ContinuousMapping<Double,Double>)
+        	        functionFactoryContinuous.createVisualMappingFunction(TM.edgeStatisticAttName.name, Double.class, BasicVisualLexicon.EDGE_WIDTH);
+        	 cem.addPoint(minEdgeWidthAtt, new BoundaryRangeValues<Double>(1d, 1d, 1d));
+             cem.addPoint(maxEdgeWidthAtt, new BoundaryRangeValues<Double>(10d,10d,10d));
+             visualStyle.addVisualMappingFunction(cem);
+        }
+        else {
+        	ContinuousMapping<Integer,Double> cem = (ContinuousMapping<Integer,Double>)
+    	        	functionFactoryContinuous.createVisualMappingFunction(TM.edgeSourceMemberCountAttName.name, Integer.class, BasicVisualLexicon.EDGE_WIDTH);
+        	cem.addPoint((int)Math.round(minEdgeWidthAtt), new BoundaryRangeValues<Double>(1d, 1d, 1d));
+        	cem.addPoint((int)Math.round(maxEdgeWidthAtt), new BoundaryRangeValues<Double>(10d, 10d, 10d));
+        	visualStyle.addVisualMappingFunction(cem);
+        }
+        
         return visualStyle;
 	}
 
 	
-    private Color getRandomColor(Random gen) {
-        int r = gen.nextInt(256);
-        int g = gen.nextInt(256);
-        int b = gen.nextInt(256);
-        return new Color(r,g,b);
-    }
+	
 
 
     private String formatName(String name) {
