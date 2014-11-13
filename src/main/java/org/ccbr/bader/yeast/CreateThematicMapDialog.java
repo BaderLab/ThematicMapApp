@@ -1,12 +1,18 @@
 package org.ccbr.bader.yeast;
 
+import static java.util.Arrays.asList;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -19,20 +25,29 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import org.ccbr.bader.yeast.statistics.HyperGeomProbabilityStatistic;
+import org.ccbr.bader.yeast.statistics.NetworkShuffleStatisticMultiThreaded;
+import org.ccbr.bader.yeast.statistics.StatisticFactory;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.model.CyColumn;
+import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
+import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewManager;
+import org.cytoscape.view.model.View;
+import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -43,20 +58,43 @@ public class CreateThematicMapDialog extends JDialog {
 
 	private final String NONE = "[None]";
 	
-	
-	private final CyApplicationManager applicationManager;
-	
+	@Inject private CyApplicationManager applicationManager;
 	@Inject private CyNetworkViewManager networkViewManager;
 	@Inject private Provider<ThematicMap> thematicMapProvider;
+	@Inject private StatisticFactory statisticFactory;
+	
+
+	private JRadioButton countRadio;
+	private JRadioButton statisticsRadio;
+	private JRadioButton hyperRadio;
+	private JRadioButton culmRadio;
+	private JRadioButton shuffRadio;
+	
+	private JComboBox<String> attributeCombo;
+	private JComboBox<String> weightCombo;
+	
+	private JCheckBox hideSelfLoopsCheck;
+	private JCheckBox singleNodesCheck;
+	private JCheckBox evaluateCheck;
+	
+	private JTextField evaluateText;
+	private JTextField iterationsText;
+	
+	private File evaluateFile = null;
+	
+	private Set<Component> statisticsEnablement = new HashSet<Component>();
+	private Set<Component> shuffleEnablement = new HashSet<Component>();
+	private Set<Component> evaluateEnablement = new HashSet<Component>();
+	
 	
 	
 	@Inject
 	public CreateThematicMapDialog(CySwingApplication application, CyApplicationManager applicationManager) {
 		super(application.getJFrame(), true);
 		setTitle("Create Thematic Map");
-		
-		this.applicationManager = applicationManager;
+		this.applicationManager = applicationManager; // needed in createContents() method
 		createContents();
+		updateEnablement();
 	}
 	
 	
@@ -90,7 +128,7 @@ public class CreateThematicMapDialog extends JDialog {
 		label.setAlignmentX(Component.LEFT_ALIGNMENT);
 		attributePanel.add(label);
 		
-		JComboBox<String> attributeCombo = new JComboBox<String>();
+		attributeCombo = new JComboBox<String>();
 		for(String attribute : getAttributes(false)) {
 			attributeCombo.addItem(attribute);
 		}
@@ -105,7 +143,7 @@ public class CreateThematicMapDialog extends JDialog {
 		label.setAlignmentX(Component.LEFT_ALIGNMENT);
 		attributePanel.add(label);
 		
-		JComboBox<String> weightCombo = new JComboBox<String>();
+		weightCombo = new JComboBox<String>();
 		weightCombo.addItem(NONE);
 		for(String attribute : getAttributes(true)) {
 			weightCombo.addItem(attribute);
@@ -121,12 +159,33 @@ public class CreateThematicMapDialog extends JDialog {
 		label.setAlignmentX(Component.LEFT_ALIGNMENT);
 		attributePanel.add(label);
 		
-		JRadioButton countRadio = new JRadioButton("Count");
-		JRadioButton statisticsRadio = new JRadioButton("Statistics");
+		countRadio = new JRadioButton("Count");
+		statisticsRadio = new JRadioButton("Statistics");
 		groupButtons(countRadio, statisticsRadio);
+		
+		ActionListener radioListener = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				updateEnablement();
+			}
+		};
+		
+		countRadio.addActionListener(radioListener);
+		statisticsRadio.addActionListener(radioListener);
 		
 		attributePanel.add(countRadio);
 		attributePanel.add(statisticsRadio);
+		
+		attributePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+		
+		label = new JLabel("Options");
+		label.setAlignmentX(Component.LEFT_ALIGNMENT);
+		attributePanel.add(label);
+		
+		hideSelfLoopsCheck = new JCheckBox("Hide self loops");
+		singleNodesCheck = new JCheckBox("Include single nodes");
+		
+		attributePanel.add(hideSelfLoopsCheck);
+		attributePanel.add(singleNodesCheck);
 		
 		return attributePanel;
 	}
@@ -142,30 +201,48 @@ public class CreateThematicMapDialog extends JDialog {
 		label.setAlignmentX(Component.LEFT_ALIGNMENT);
 		radioPanel.add(label);
 		
-		JRadioButton noneRadio  = new JRadioButton("None");
-		JRadioButton hyperRadio = new JRadioButton("Hypergeometric Probability");
-		JRadioButton culmRadio  = new JRadioButton("Hypergeometric Probability (Cumulative)");
-		JRadioButton shuffRadio = new JRadioButton("Shuffle"); 
-		groupButtons(noneRadio, hyperRadio, culmRadio, shuffRadio);
+		hyperRadio = new JRadioButton("Hypergeometric Probability");
+		culmRadio  = new JRadioButton("Hypergeometric Probability (Cumulative)");
+		shuffRadio = new JRadioButton("Shuffle"); 
 		
-		radioPanel.add(noneRadio);
+		groupButtons(hyperRadio, culmRadio, shuffRadio);
+		
+		ActionListener radioListener = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				updateEnablement();
+			}
+		};
+		
+		hyperRadio.addActionListener(radioListener);
+		culmRadio.addActionListener(radioListener);
+		shuffRadio.addActionListener(radioListener);
+		
 		radioPanel.add(hyperRadio);
 		radioPanel.add(culmRadio);
 		radioPanel.add(shuffRadio);
-			
+		
 		statisticsPanel.add(radioPanel, BorderLayout.NORTH);
 		
+		JPanel shufflePanel = createShufflePanel();
+		statisticsPanel.add(shufflePanel, BorderLayout.CENTER);
 		
+		statisticsEnablement.addAll(asList(label, hyperRadio, culmRadio, shuffRadio));
+		
+		return statisticsPanel;
+	}
+	
+	private JPanel createShufflePanel() {
 		JPanel shufflePanel = new JPanel();
 		shufflePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		GridBagConstraints gbc;
 		shufflePanel.setLayout(new GridBagLayout());
-		shufflePanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 0));
+		shufflePanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 0));
 		
 		JPanel iterationsPanel = new JPanel();
 		iterationsPanel.setLayout(new BoxLayout(iterationsPanel, BoxLayout.X_AXIS));
-		iterationsPanel.add(new JLabel("Iterations:"));
-		JTextField iterationsText = new JFormattedTextField("1000");
+		JLabel label = new JLabel("Iterations:");
+		iterationsPanel.add(label);
+		iterationsText = new JFormattedTextField("1000");
 		iterationsPanel.add(iterationsText);
 		gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.NONE;
@@ -175,7 +252,7 @@ public class CreateThematicMapDialog extends JDialog {
 		gbc.weightx = 1.0;
 		shufflePanel.add(iterationsPanel, gbc);
 		
-		JCheckBox evaluateCheck = new JCheckBox("Evaluate shuffle iterations");
+		evaluateCheck = new JCheckBox("Evaluate shuffle iterations");
 		gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.WEST;
@@ -183,7 +260,7 @@ public class CreateThematicMapDialog extends JDialog {
 		gbc.gridy = 1;
 		shufflePanel.add(evaluateCheck, gbc);
 
-		JTextField evaluateText = new JTextField();
+		evaluateText = new JFormattedTextField("10,50,100,500,1000");
 		gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.anchor = GridBagConstraints.WEST;
@@ -199,11 +276,7 @@ public class CreateThematicMapDialog extends JDialog {
 		gbc.gridy = 3;
 		shufflePanel.add(saveLabel, gbc);
 		
-		JPanel browsePanel = new JPanel(new BorderLayout());
-		JTextField directoryText = new JTextField();
-		browsePanel.add(directoryText, BorderLayout.CENTER);
-		JButton browseButton = new JButton("Browse...");
-		browsePanel.add(browseButton, BorderLayout.EAST);
+		JPanel browsePanel = createBrowsePanel();
 		gbc = new GridBagConstraints();
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.anchor = GridBagConstraints.NORTHWEST;
@@ -212,8 +285,43 @@ public class CreateThematicMapDialog extends JDialog {
 		gbc.weighty = 1.0;
 		shufflePanel.add(browsePanel, gbc);
 		
-		statisticsPanel.add(shufflePanel, BorderLayout.CENTER);
-		return statisticsPanel;
+		evaluateCheck.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				updateEnablement();
+			}
+		});
+		
+		shuffleEnablement.addAll(asList(label, iterationsText, evaluateCheck));
+		evaluateEnablement.addAll(asList(evaluateText, saveLabel));
+		
+		return shufflePanel;
+	}
+	
+	
+	private JPanel createBrowsePanel() {
+		JPanel browsePanel = new JPanel(new BorderLayout());
+		final JTextField directoryText = new JTextField();
+		directoryText.setEditable(false);
+		browsePanel.add(directoryText, BorderLayout.CENTER);
+		JButton browseButton = new JButton("Browse...");
+		browsePanel.add(browseButton, BorderLayout.EAST);
+		
+		browseButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				JFileChooser chooser = new JFileChooser();
+		        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		        int retval = chooser.showSaveDialog(CreateThematicMapDialog.this);
+		        if (retval == JFileChooser.APPROVE_OPTION) {
+				    File selectedFile = chooser.getSelectedFile();
+		            directoryText.setText(selectedFile.getPath());
+		            evaluateFile = selectedFile;
+		        }
+			}
+		});
+		
+		evaluateEnablement.addAll(asList(directoryText, browseButton));
+		
+		return browsePanel;
 	}
 	
 	
@@ -225,20 +333,155 @@ public class CreateThematicMapDialog extends JDialog {
 		
 		JButton cancelButton = new JButton("Cancel");
 		buttonPanel.add(cancelButton);
+		
+		cancelButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dispose();
+			}
+		});
+		
 		JButton createButton = new JButton("Create Thematic Map");
 		buttonPanel.add(createButton);
+		
+		createButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				generateThematicMap();				
+			}
+		});
 		
 		parentPanel.add(buttonPanel, BorderLayout.CENTER);
 		return parentPanel;
 	}
 	
 	
-	private static void groupButtons(AbstractButton ... buttons) {
+	
+	private int[] getShuffleFlagValues() {
+		try {
+			String[] allFlags = evaluateText.getText().split(",");
+	        int[] allFlagValues = new int[allFlags.length];
+	        for(int i=0; i < allFlags.length; i++) {
+	            allFlagValues[i] = Integer.parseInt(allFlags[i]);
+	        }
+	        return allFlagValues.length == 0 ? null : allFlagValues;
+		} catch(NumberFormatException e) {
+			return null;
+		}
+	}
+	
+	private boolean validateAndShowErrors() {
+		if(evaluateCheck.isSelected() && evaluateFile == null) {
+			showError("Please browse for a save file for the shuffle evaluations");
+			return false;
+		}
+		if(statisticsRadio.isSelected() && shuffRadio.isSelected() && evaluateCheck.isSelected()) {
+			if(getShuffleFlagValues() == null) {
+				showError("Evaluation flags must be integers separated by commas.");
+				return false;
+			}
+			try {
+				Integer.parseInt(iterationsText.getText());
+			} 
+			catch (NumberFormatException e) {
+            	showError("Shuffle iterations must be an integer.");
+            	return false;
+            }  
+		}
+		return true;
+	}
+	
+	private void showError(String message) {
+		JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
+	}
+	
+	
+	private void generateThematicMap() {
+		if(!validateAndShowErrors()) {
+			return;
+		}
+		
+		ThematicMap tmap = thematicMapProvider.get(); // instantiate ThematicMap object using injector
+		
+		String attributeName = (String)attributeCombo.getSelectedItem();
+        String weightAttributeName = (String)weightCombo.getSelectedItem();
+        if(!NONE.equals(weightAttributeName)) {
+        	tmap.setEdgeWeightAttributeName(weightAttributeName);
+        }
+        
+        CyNetwork inputNetwork = applicationManager.getCurrentNetwork();
+        CyNetwork thematicMap = tmap.createThematicMap(inputNetwork, attributeName); // running on the UI thread, tsk tsk
+        
+        if(statisticsRadio.isSelected()) {
+        	if(hyperRadio.isSelected()) {
+        		HyperGeomProbabilityStatistic stat = statisticFactory.createHyperGeomProbabilityStatistic(inputNetwork, thematicMap);
+        		stat.getStatistics(attributeName, false);
+        	}
+        	else if(culmRadio.isSelected()) {
+        		HyperGeomProbabilityStatistic stat = statisticFactory.createHyperGeomProbabilityStatistic(inputNetwork, thematicMap);
+        		stat.getStatistics(attributeName, true);
+        	}
+        	else if(shuffRadio.isSelected()) {
+        		int[] allFlagValues = null;
+        		if(evaluateCheck.isSelected()) {
+	                allFlagValues = getShuffleFlagValues();
+        		}
+        		int shuffleIterations = Integer.parseInt(iterationsText.getText());
+        		
+                NetworkShuffleStatisticMultiThreaded statThreaded = statisticFactory.createNetworkShuffleStatisticMultiThreaded(inputNetwork, thematicMap);
+                statThreaded.getStatistics(attributeName, shuffleIterations, allFlagValues, evaluateFile);
+        	}
+        }
+        
+        if (singleNodesCheck.isSelected()) {
+//          tmap.getSingleNodes(inputNetwork, thematicMap, attName, single_nodes, single_node_edges);
+        }
+        
+        int edgeWidthType = statisticsRadio.isSelected() ?  ThematicMap.EDGE_WIDTH_STATISTICS : ThematicMap.EDGE_WIDTH_COUNT;
+        tmap.createThematicMapDefaultView(thematicMap, attributeName, edgeWidthType);
+        
+        if (hideSelfLoopsCheck.isSelected()) {
+            CyNetworkView thematicMapView = networkViewManager.getNetworkViews(thematicMap).iterator().next(); // MKTODO 
+            for(CyEdge edge : thematicMap.getEdgeList()) {
+            	if (edge.getSource().equals(edge.getTarget())) {
+                    View<CyEdge> edgeView = thematicMapView.getEdgeView(edge);
+                    edgeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+                }
+            }
+            thematicMapView.updateView();
+        }
+
+        dispose();
+	}
+	
+	
+	private void updateEnablement() {
+		setEnabled(statisticsEnablement, false);
+		setEnabled(shuffleEnablement, false);
+		setEnabled(evaluateEnablement, false);
+		
+		if(statisticsRadio.isSelected()) {
+			setEnabled(statisticsEnablement, true);
+			if(shuffRadio.isSelected()) {
+				setEnabled(shuffleEnablement, true);
+				if(evaluateCheck.isSelected()) {
+					setEnabled(evaluateEnablement, true);
+				}
+			}
+		}
+	}
+	
+	private static void setEnabled(Collection<Component> components, boolean enabled) {
+		for(Component c : components) {
+			c.setEnabled(enabled);
+		}
+	}
+	
+	private static void groupButtons(AbstractButton... buttons) {
 		ButtonGroup group = new ButtonGroup();
 		for(AbstractButton button : buttons) {
 			group.add(button);
 		}
-		buttons[0].setSelected(true);
+		if(buttons.length > 0)
+			buttons[0].setSelected(true);
 	}
 	
 	private Collection<String> getAttributes(boolean numericOnly) {
@@ -253,6 +496,5 @@ public class CreateThematicMapDialog extends JDialog {
     	}
     	return attributes;
     }
-	
 	
 }

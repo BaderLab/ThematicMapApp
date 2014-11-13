@@ -10,6 +10,8 @@ package org.ccbr.bader.yeast;
 
 import java.awt.event.ActionEvent;
 
+import javax.swing.JDialog;
+
 import org.cytoscape.application.swing.AbstractCyAction;
 import org.cytoscape.application.swing.CySwingApplication;
 
@@ -20,7 +22,7 @@ import com.google.inject.Provider;
 public class ThematicMapPanelAction extends AbstractCyAction {
 
 	@Inject private CySwingApplication application;
-	@Inject private Provider<ThematicMapDialog> dialogProvider;
+	@Inject private Provider<CreateThematicMapDialog> dialogProvider;
 	
     
     public ThematicMapPanelAction() {
@@ -29,7 +31,7 @@ public class ThematicMapPanelAction extends AbstractCyAction {
 
 	@Override
     public void actionPerformed(ActionEvent event) {
-        ThematicMapDialog tmd = dialogProvider.get();
+		JDialog tmd = dialogProvider.get();
         tmd.setLocationRelativeTo(application.getJFrame());
         tmd.setVisible(true);
     }
