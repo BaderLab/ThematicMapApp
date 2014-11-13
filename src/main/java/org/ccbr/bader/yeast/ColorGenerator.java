@@ -1,26 +1,19 @@
 package org.ccbr.bader.yeast;
 
 import java.awt.Color;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Random;
 
 public class ColorGenerator {
 
 	private LinkedList<Color> baseColors = new LinkedList<Color>();
-	{
-		baseColors.add(Color.BLUE);
-		baseColors.add(Color.RED);       
-		baseColors.add(Color.YELLOW);
-		baseColors.add(Color.ORANGE);
-		baseColors.add(Color.GREEN);
-		baseColors.add(Color.MAGENTA);
-		baseColors.add(Color.CYAN);
-		baseColors.add(Color.PINK);
-		baseColors.add(Color.BLACK);
-		baseColors.add(Color.GRAY);
-	}
-	
 	private Random random = null;
+	
+	public ColorGenerator() {
+		Collections.addAll(baseColors, Color.BLUE, Color.RED, Color.YELLOW, Color.ORANGE, Color.GREEN, 
+				                       Color.MAGENTA, Color.CYAN, Color.PINK, Color.BLACK, Color.GRAY);
+	}
 	
 	
 	private Random getRandom() {

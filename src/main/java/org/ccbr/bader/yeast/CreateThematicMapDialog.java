@@ -1,6 +1,5 @@
 package org.ccbr.bader.yeast;
 
-import static java.util.Arrays.asList;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -12,6 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
@@ -91,8 +92,10 @@ public class CreateThematicMapDialog extends JDialog {
 	@Inject
 	public CreateThematicMapDialog(CySwingApplication application, CyApplicationManager applicationManager) {
 		super(application.getJFrame(), true);
-		setTitle("Create Thematic Map");
-		this.applicationManager = applicationManager; // needed in createContents() method
+		CyNetwork inputNetwork = applicationManager.getCurrentNetwork();
+		String networkName = inputNetwork.getRow(inputNetwork).get(CyNetwork.NAME, String.class);
+		setTitle("Create Thematic Map: " + networkName);
+		this.applicationManager = applicationManager;
 		createContents();
 		updateEnablement();
 	}
@@ -226,7 +229,7 @@ public class CreateThematicMapDialog extends JDialog {
 		JPanel shufflePanel = createShufflePanel();
 		statisticsPanel.add(shufflePanel, BorderLayout.CENTER);
 		
-		statisticsEnablement.addAll(asList(label, hyperRadio, culmRadio, shuffRadio));
+		Collections.addAll(statisticsEnablement, label, hyperRadio, culmRadio, shuffRadio);
 		
 		return statisticsPanel;
 	}
@@ -291,8 +294,8 @@ public class CreateThematicMapDialog extends JDialog {
 			}
 		});
 		
-		shuffleEnablement.addAll(asList(label, iterationsText, evaluateCheck));
-		evaluateEnablement.addAll(asList(evaluateText, saveLabel));
+		Collections.addAll(shuffleEnablement, label, iterationsText, evaluateCheck);
+		Collections.addAll(evaluateEnablement, evaluateText, saveLabel);
 		
 		return shufflePanel;
 	}
@@ -319,7 +322,7 @@ public class CreateThematicMapDialog extends JDialog {
 			}
 		});
 		
-		evaluateEnablement.addAll(asList(directoryText, browseButton));
+		Collections.addAll(evaluateEnablement, directoryText, browseButton);
 		
 		return browsePanel;
 	}
@@ -488,7 +491,12 @@ public class CreateThematicMapDialog extends JDialog {
         CyNetwork network = applicationManager.getCurrentNetwork();
         Collection<CyColumn> columns = network.getDefaultNodeTable().getColumns();
         
-    	Set<String> attributes = new TreeSet<String>();
+    	Set<String> attributes = new TreeSet<String>(new Comparator<String>() {
+			public int compare(String s1, String s2) {
+				return s1.compareToIgnoreCase(s2);
+			}
+		});
+    	
     	for(CyColumn column : columns) {
     		if(!CyIdentifiable.SUID.equals(column.getName()) && (!numericOnly || Number.class.isAssignableFrom(column.getType()))) {
     			attributes.add(column.getName());

@@ -45,9 +45,8 @@ import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
 
 
-/**Provides a number of utility methods useful by other parts of the plugin
- * @author mikematan
- *
+/**
+ * Provides a number of utility methods useful by other parts of the plugin
  */
 public class TMUtil {
 	
@@ -73,52 +72,7 @@ public class TMUtil {
         	return val == null ? Collections.<Object>emptyList() : Collections.singleton(val);
         }
     }
-
 	
-//	public static Class<?> getNodeAttType(String attName) {
-//		
-//		return nodeAtt.getType(attName);
-//	}
-//
-//
-//
-//	public static List<String> getStringListAtt(Node node, String attName) {
-//		//TODO consider placing a check to make sure it is a string list
-//		return nodeAtt.getListAttribute(node.getIdentifier(), attName);
-//	}
-//
-//	public static void setStringAtt(Node node, String attributeName, String value) {
-//		nodeAtt.setAttribute(node.getIdentifier(), attributeName, value);
-//	}
-//	
-//	public static void setStringAtt(Edge edge, String attributeName, String value) {
-//		edgeAtt.setAttribute(edge.getIdentifier(), attributeName, value);
-//	}
-//	
-//	/**Adds the value parameter to the given node's specified list attribute, creating the attribute if it does not already exist 
-//	 * @param node the node for whom the list attribute should be appended to
-//	 * @param attributeName the name of the list attribute to be appended
-//	 * @param value the value to append to the list
-//	 */
-//	public static void addToListAttribute(Node node, String attributeName, String value) {
-//		addToListAttribute(nodeAtt, node.getIdentifier(), attributeName, value);
-//	}
-//	
-//	public static void addToListAttribute(Edge edge, String attributeName, String value) {
-//		addToListAttribute(edgeAtt, edge.getIdentifier(), attributeName, value);
-//	}
-//	
-//	private static void addToListAttribute(CyAttributes attributes, String id, String attributeName, String value) {
-//		List<String> listAtt = attributes.getListAttribute(id, attributeName);
-//		if (listAtt == null) {
-//			listAtt = new ArrayList<String>();
-//		}
-//        if (!listAtt.contains(value)) {
-//            listAtt.add(value);
-//        }        
-//		attributes.setListAttribute(id, attributeName, listAtt);
-//	}
-//	
 	public static <T> void addToListAttribute(CyRow row, String attributeName, T value, Class<T> type) {
 		List<T> listAtt = row.getList(attributeName, type);
 		if(listAtt == null) {
@@ -134,59 +88,17 @@ public class TMUtil {
 		addToListAttribute(row, attributeName, value, String.class);
 	}
 	
-//	public static void addToListAttributeNonRedundant(Node node, String attributeName, String value) {
-//		addToListAttributeNonRedundant(nodeAtt, node.getIdentifier(), attributeName, value);
-//	}
-//	
-//	public static void addToListAttributeNonRedundant(Edge edge, String attributeName, String value) {
-//		addToListAttributeNonRedundant(edgeAtt, edge.getIdentifier(), attributeName, value);
-//	}
-//	
-//	/**Adds the value parameter to the given id's specified list attribute if it isn't already present, creating the attribute if it does not already exist 
-//	 * @param attributes the attribute structure to be altered
-//	 * @param id the id of the object for which the attribute should be altered
-//	 * @param attributeName the name of the list attribute to be altered
-//	 * @param value the new value to add to the list
-//	 */
-//	private static void addToListAttributeNonRedundant(CyAttributes attributes, String id, String attributeName, String value) {
-//		List<String> listAtt = attributes.getListAttribute(id, attributeName);
-//		if (listAtt == null) {
-//			listAtt = new ArrayList<String>();
-//		}
-//		if (!listAtt.contains(value)) {
-//			listAtt.add(value);
-//			attributes.setListAttribute(id, attributeName, listAtt);
-//		}
-//		
-//	}
-	
 	public static int getNumThemeMembers(CyNetwork themeNetwork, CyNode themeNode) {
 		List<String> themeMembers = themeNetwork.getRow(themeNode).getList(TM.memberListAttName.name, String.class);
 		if (themeMembers == null) return 0;
 		return themeMembers.size();
 	}
 
-//	public static Node createSumThemeNode(Node node1, Node node2) {
-//		int mergedId = Cytoscape.getRootGraph().createNode();
-//		Node merged = Cytoscape.getRootGraph().getNode(mergedId);
-//		//TODO merge attributes
-//		return merged;
-//	}
-//
-//	public static void setNodeIntAttribute(Node node, String attributeName, int value) {
-//		nodeAtt.setAttribute(node.getIdentifier(), attributeName, value);
-//	}
-
 	public static int getNumThemeMembers(CyNetwork themeNetwork, CyEdge themeEdge) {
 		List<String> themeMembers = themeNetwork.getRow(themeEdge).getList(TM.edgeSourceAttName.name, String.class);
 		if (themeMembers == null) return 0;
 		return themeMembers.size();
 	}
-
-//	public static void setEdgeDoubleAttr(Edge edge, String attributeName, double value) {
-//		edgeAtt.setAttribute(edge.getIdentifier(), attributeName, value);
-//	}
-	
 	
 	/**
 	 * Returns the first edge between the two nodes that matches the given attribute.

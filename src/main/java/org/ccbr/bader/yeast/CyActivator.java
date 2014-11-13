@@ -13,6 +13,7 @@ import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.model.CyNetworkFactory;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.service.util.AbstractCyActivator;
+import org.cytoscape.util.swing.OpenBrowser;
 import org.cytoscape.view.layout.CyLayoutAlgorithmManager;
 import org.cytoscape.view.model.CyNetworkViewFactory;
 import org.cytoscape.view.model.CyNetworkViewManager;
@@ -35,9 +36,13 @@ public class CyActivator extends AbstractCyActivator {
 	public void start(BundleContext context) {
 		Injector injector = Guice.createInjector(osgiModule(context), new MainModule());
 		
-		ThematicMapPanelAction thematicMapAction = injector.getInstance(ThematicMapPanelAction.class);
+		CreateThematicMapAction thematicMapAction = injector.getInstance(CreateThematicMapAction.class);
 		thematicMapAction.setPreferredMenu("Apps.ThematicMap");
 		registerAllServices(context, thematicMapAction, new Properties());
+		
+		AboutDialogAction aboutDialogAction = injector.getInstance(AboutDialogAction.class);
+		aboutDialogAction.setPreferredMenu("Apps.ThematicMap");
+		registerAllServices(context, aboutDialogAction, new Properties());
 	}
 	
 	
@@ -53,6 +58,7 @@ public class CyActivator extends AbstractCyActivator {
 			bind(CyNetworkViewManager.class).toProvider(service(CyNetworkViewManager.class).single());
 			bind(CyNetworkFactory.class).toProvider(service(CyNetworkFactory.class).single());
 			bind(CyLayoutAlgorithmManager.class).toProvider(service(CyLayoutAlgorithmManager.class).single());
+			bind(OpenBrowser.class).toProvider(service(OpenBrowser.class).single());
 			
 			bind(DialogTaskManager.class).toProvider(service(DialogTaskManager.class).single());
 			bind(new TypeLiteral<TaskManager<?,?>>(){}).to(DialogTaskManager.class);

@@ -44,7 +44,6 @@ import org.cytoscape.model.CyTable;
  */
 public enum TM {
 
-	// input network (why?)
 	edgeSourceMemberCountAttName("ThemeMapper.INPUT_EDGES_COUNT", CyEdge.class, false, Integer.class),
     edgeStatisticAttName("ThemeMapper.EDGE_STATISTIC", CyEdge.class, false, Double.class),
     edgeStatisticTypeAttName("ThemeMapper.EDGE_STATISTIC_TYPE", CyEdge.class, false, String.class),
@@ -72,7 +71,7 @@ public enum TM {
 	
     public static void createColumns(CyNetwork thematicMap) {
     	for(TM tm : values()) {
-    		CyTable table = thematicMap.getTable(tm.tableType, CyNetwork.LOCAL_ATTRS);
+    		CyTable table = thematicMap.getTable(tm.tableType, CyNetwork.LOCAL_ATTRS);  // select node or edge table
     		if(tm.isList)
     			table.createListColumn(tm.name, tm.type, false);
     		else

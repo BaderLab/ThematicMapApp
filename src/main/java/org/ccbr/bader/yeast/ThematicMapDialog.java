@@ -40,8 +40,6 @@ import javax.swing.ListSelectionModel;
 
 import org.ccbr.bader.yeast.statistics.HyperGeomProbabilityStatistic;
 import org.ccbr.bader.yeast.statistics.NetworkShuffleStatisticMultiThreaded;
-import org.ccbr.bader.yeast.view.gui.misc.JButtonMod;
-import org.ccbr.bader.yeast.view.gui.misc.JLabelMod;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.model.CyColumn;
@@ -56,7 +54,10 @@ import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-
+/**
+ * @deprecated Use {@link CreateThematicMapDialog} instead.
+ */
+@Deprecated
 @SuppressWarnings("serial")
 public class ThematicMapDialog extends JDialog implements PropertyChangeListener, ActionListener {
 
@@ -115,7 +116,7 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
 
     private JButton getCancelButton() {
         if (cancelButton == null) {
-            cancelButton = new JButtonMod("Cancel");
+            cancelButton = new JButton("Cancel");
             cancelButton.addActionListener(this);
         }
         return cancelButton;
@@ -123,7 +124,7 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
 
     private JButton getCreateMapButton() {
         if (createMapButton == null) {
-            createMapButton = new JButtonMod("Create Thematic Map");
+            createMapButton = new JButton("Create Thematic Map");
             createMapButton.addActionListener(this);
         }
         return createMapButton;
@@ -169,7 +170,7 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
 
     private JLabel getAttributeListLabel() {
         if (attributeListLabel == null) {
-            attributeListLabel = new JLabelMod("Thematic Map Attribute:");
+            attributeListLabel = new JLabel("Thematic Map Attribute:");
         }
         return attributeListLabel;
     }
@@ -406,7 +407,7 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
 
     private JButton getEvaluateShuffleChooseFileButton() {
         if (evaluateShuffleChooseFileButton == null) {
-            evaluateShuffleChooseFileButton = new JButtonMod("Select Save Directory");
+            evaluateShuffleChooseFileButton = new JButton("Select Save Directory");
             evaluateShuffleChooseFileButton.setEnabled(evaluateShuffleCheckBox.isSelected());
             evaluateShuffleChooseFileButton.addActionListener(this);
         }

@@ -19,14 +19,14 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 @SuppressWarnings("serial")
-public class ThematicMapPanelAction extends AbstractCyAction {
+public class CreateThematicMapAction extends AbstractCyAction {
 
 	@Inject private CySwingApplication application;
 	@Inject private Provider<CreateThematicMapDialog> dialogProvider;
 	
     
-    public ThematicMapPanelAction() {
-		super("Create Thematic Map");
+    public CreateThematicMapAction() {
+		super("Create Thematic Map...");
 	}
 
 	@Override
