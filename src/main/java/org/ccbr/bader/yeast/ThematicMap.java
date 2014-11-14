@@ -239,11 +239,13 @@ public class ThematicMap {
         CyEdge themeNodeEdge = TMUtil.getCyEdge(thematicMap, themeSource, themeTarget, CyEdge.INTERACTION, interact + "_tt");
         // if the edge does not exist, create it
         if (themeNodeEdge == null) {
+        	System.out.println("create single edge: " + themeSource.getSUID() + " - " + themeTarget.getSUID());
             themeNodeEdge = thematicMap.addEdge(themeSource, themeTarget, false);
             CyRow row = thematicMap.getRow(themeNodeEdge);
             row.set(TM.edgeStatisticAttName.name, 0.0);
             row.set(TM.edgeSourceMemberCountAttName.name, 1);
             row.set(TM.edgeStatisticTypeAttName.name, "COUNT");
+            row.set(CyEdge.INTERACTION, interact + "_tt");
         }
         else {
             // get current count
