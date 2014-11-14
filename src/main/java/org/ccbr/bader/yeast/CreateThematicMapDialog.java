@@ -42,14 +42,10 @@ import org.ccbr.bader.yeast.statistics.StatisticFactory;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.model.CyColumn;
-import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
-import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewManager;
-import org.cytoscape.view.model.View;
-import org.cytoscape.view.presentation.property.BasicVisualLexicon;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -75,7 +71,7 @@ public class CreateThematicMapDialog extends JDialog {
 	private JComboBox<String> attributeCombo;
 	private JComboBox<String> weightCombo;
 	
-	private JCheckBox hideSelfLoopsCheck;
+	private JCheckBox removeSelfEdges;
 	private JCheckBox singleNodesCheck;
 	private JCheckBox evaluateCheck;
 	
@@ -185,10 +181,10 @@ public class CreateThematicMapDialog extends JDialog {
 		label.setAlignmentX(Component.LEFT_ALIGNMENT);
 		attributePanel.add(label);
 		
-		hideSelfLoopsCheck = new JCheckBox("Hide self loops");
+		removeSelfEdges = new JCheckBox("Remove self edges");
 		singleNodesCheck = new JCheckBox("Include single nodes");
 		
-		attributePanel.add(hideSelfLoopsCheck);
+		attributePanel.add(removeSelfEdges);
 		attributePanel.add(singleNodesCheck);
 		
 		return attributePanel;
@@ -410,6 +406,7 @@ public class CreateThematicMapDialog extends JDialog {
         if(!NONE.equals(weightAttributeName)) {
         	tmap.setEdgeWeightAttributeName(weightAttributeName);
         }
+        tmap.setAllowSelfEdges(!removeSelfEdges.isSelected());
         
         CyNetwork inputNetwork = applicationManager.getCurrentNetwork();
         CyNetwork thematicMap = tmap.createThematicMap(inputNetwork, attributeName); // running on the UI thread, tsk tsk
@@ -441,17 +438,6 @@ public class CreateThematicMapDialog extends JDialog {
         
         int edgeWidthType = statisticsRadio.isSelected() ?  ThematicMap.EDGE_WIDTH_STATISTICS : ThematicMap.EDGE_WIDTH_COUNT;
         tmap.createThematicMapDefaultView(thematicMap, attributeName, edgeWidthType);
-        
-        if (hideSelfLoopsCheck.isSelected()) {
-            CyNetworkView thematicMapView = networkViewManager.getNetworkViews(thematicMap).iterator().next(); // MKTODO 
-            for(CyEdge edge : thematicMap.getEdgeList()) {
-            	if (edge.getSource().equals(edge.getTarget())) {
-                    View<CyEdge> edgeView = thematicMapView.getEdgeView(edge);
-                    edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
-                }
-            }
-            thematicMapView.updateView();
-        }
 
         dispose();
 	}

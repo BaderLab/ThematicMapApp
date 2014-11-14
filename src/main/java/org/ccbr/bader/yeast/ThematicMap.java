@@ -63,6 +63,7 @@ public class ThematicMap {
     private static final String THEME_MAP_VISUAL_STYLE = "ThemeMapVS";
     
     private String edgeWeightAttributeName = "";
+    private boolean allowSelfEdges = true;
 
     //this will map the names of themes to the theme nodes which represent them in the graph
     private Map<Object,CyNode> themeNameToThemeNode = new HashMap<Object,CyNode>();
@@ -76,9 +77,13 @@ public class ThematicMap {
     }
 
     public void setEdgeWeightAttributeName(String edgeWeightAttName) {
-        edgeWeightAttributeName = edgeWeightAttName;
+        this.edgeWeightAttributeName = edgeWeightAttName;
     }
 
+    public void setAllowSelfEdges(boolean allow) {
+    	this.allowSelfEdges = allow;
+    }
+    
     public CyNetwork createThematicMap(String themeAttributeName) {
 		return createThematicMap(applicationManager.getCurrentNetwork(), themeAttributeName);
 	}
@@ -316,35 +321,38 @@ public class ThematicMap {
 		
 		for(Object sourceNodeTheme : sourceNodeThemes) {
 			for(Object targetNodeTheme : targetNodeThemes) {
+				
                 //create edge between theme nodes if it doesn't already exist
 				CyNode sourceThemeNode = themeNameToThemeNode.get(sourceNodeTheme);
 				CyNode targetThemeNode = themeNameToThemeNode.get(targetNodeTheme);
 				
-                //TODO if we add a mode for capturing directedness, change directedness parameter in the following statements to 'true'
-                CyEdge themeEdge = TMUtil.getCyEdge(thematicGraph, sourceThemeNode, targetThemeNode, CyEdge.INTERACTION, interaction + "_tt");
-                //if the edge does not exist, create it.
-                if (themeEdge == null) {
-                    themeEdge = thematicGraph.addEdge(sourceThemeNode, targetThemeNode, false);
-                    thematicGraph.getRow(themeEdge).set(CyEdge.INTERACTION, interaction + "_tt");
-                    thematicGraph.getRow(themeEdge).set(TM.edgeStatisticAttName.name, 0.0);
-                }
-
-                //recording the input edge's source and target nodes as an attribute of the theme edge
-                String themeEdgeAttributeVal = source.getSUID().toString() + "-" + target.getSUID().toString();
-                TMUtil.addToListAttribute(thematicGraph.getRow(themeEdge), TM.edgeSourceAttName.name, themeEdgeAttributeVal);
-
-                // add the input edge weight to the list of weights (if applicable)
-                if (inputEdgeWeight!=Double.MIN_VALUE) {
-                	TMUtil.addToListAttribute(thematicGraph.getRow(themeEdge), TM.edgeWeightListAttName.name, inputEdgeWeight, Double.class);
-                }
-
-                //add new theme edge entry to the set of theme edges which this input edge corresponds to
-                Set<CyEdge> themeEdges = inputEdgeToThemeEdges.get(inputEdge);
-                if (themeEdges == null) {
-                    themeEdges = new HashSet<CyEdge>();
-                    inputEdgeToThemeEdges.put(inputEdge, themeEdges);
-                }
-                themeEdges.add(themeEdge);
+				if(allowSelfEdges || !sourceThemeNode.equals(targetThemeNode)) {
+	                //TODO if we add a mode for capturing directedness, change directedness parameter in the following statements to 'true'
+	                CyEdge themeEdge = TMUtil.getCyEdge(thematicGraph, sourceThemeNode, targetThemeNode, CyEdge.INTERACTION, interaction + "_tt");
+	                //if the edge does not exist, create it.
+	                if (themeEdge == null) {
+	                    themeEdge = thematicGraph.addEdge(sourceThemeNode, targetThemeNode, false);
+	                    thematicGraph.getRow(themeEdge).set(CyEdge.INTERACTION, interaction + "_tt");
+	                    thematicGraph.getRow(themeEdge).set(TM.edgeStatisticAttName.name, 0.0);
+	                }
+	
+	                //recording the input edge's source and target nodes as an attribute of the theme edge
+	                String themeEdgeAttributeVal = source.getSUID().toString() + "-" + target.getSUID().toString();
+	                TMUtil.addToListAttribute(thematicGraph.getRow(themeEdge), TM.edgeSourceAttName.name, themeEdgeAttributeVal);
+	
+	                // add the input edge weight to the list of weights (if applicable)
+	                if (inputEdgeWeight!=Double.MIN_VALUE) {
+	                	TMUtil.addToListAttribute(thematicGraph.getRow(themeEdge), TM.edgeWeightListAttName.name, inputEdgeWeight, Double.class);
+	                }
+	
+	                //add new theme edge entry to the set of theme edges which this input edge corresponds to
+	                Set<CyEdge> themeEdges = inputEdgeToThemeEdges.get(inputEdge);
+	                if (themeEdges == null) {
+	                    themeEdges = new HashSet<CyEdge>();
+	                    inputEdgeToThemeEdges.put(inputEdge, themeEdges);
+	                }
+	                themeEdges.add(themeEdge);
+				}
 			}
 		}
 
