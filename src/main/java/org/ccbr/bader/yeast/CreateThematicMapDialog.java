@@ -45,6 +45,7 @@ import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyEdge;
 import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
+import org.cytoscape.model.CyTable;
 import org.cytoscape.view.model.CyNetworkView;
 import org.cytoscape.view.model.CyNetworkViewManager;
 import org.cytoscape.view.model.View;
@@ -132,7 +133,7 @@ public class CreateThematicMapDialog extends JDialog {
 		attributePanel.add(label);
 		
 		attributeCombo = new JComboBox<String>();
-		for(String attribute : getAttributes(false)) {
+		for(String attribute : getAttributes(true)) {
 			attributeCombo.addItem(attribute);
 		}
 		attributeCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -148,7 +149,7 @@ public class CreateThematicMapDialog extends JDialog {
 		
 		weightCombo = new JComboBox<String>();
 		weightCombo.addItem(NONE);
-		for(String attribute : getAttributes(true)) {
+		for(String attribute : getAttributes(false)) {
 			weightCombo.addItem(attribute);
 		}
 		weightCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -435,7 +436,7 @@ public class CreateThematicMapDialog extends JDialog {
         }
         
         if (singleNodesCheck.isSelected()) {
-//          tmap.getSingleNodes(inputNetwork, thematicMap, attName, single_nodes, single_node_edges);
+        	tmap.getSingleNodes(inputNetwork, thematicMap, attributeName);
         }
         
         int edgeWidthType = statisticsRadio.isSelected() ?  ThematicMap.EDGE_WIDTH_STATISTICS : ThematicMap.EDGE_WIDTH_COUNT;
@@ -446,7 +447,7 @@ public class CreateThematicMapDialog extends JDialog {
             for(CyEdge edge : thematicMap.getEdgeList()) {
             	if (edge.getSource().equals(edge.getTarget())) {
                     View<CyEdge> edgeView = thematicMapView.getEdgeView(edge);
-                    edgeView.setLockedValue(BasicVisualLexicon.NODE_VISIBLE, false);
+                    edgeView.setLockedValue(BasicVisualLexicon.EDGE_VISIBLE, false);
                 }
             }
             thematicMapView.updateView();
@@ -487,9 +488,10 @@ public class CreateThematicMapDialog extends JDialog {
 			buttons[0].setSelected(true);
 	}
 	
-	private Collection<String> getAttributes(boolean numericOnly) {
+	private Collection<String> getAttributes(boolean node) {
         CyNetwork network = applicationManager.getCurrentNetwork();
-        Collection<CyColumn> columns = network.getDefaultNodeTable().getColumns();
+        CyTable table = node ? network.getDefaultNodeTable() : network.getDefaultEdgeTable();
+		Collection<CyColumn> columns = table.getColumns();
         
     	Set<String> attributes = new TreeSet<String>(new Comparator<String>() {
 			public int compare(String s1, String s2) {
@@ -498,7 +500,7 @@ public class CreateThematicMapDialog extends JDialog {
 		});
     	
     	for(CyColumn column : columns) {
-    		if(!CyIdentifiable.SUID.equals(column.getName()) && (!numericOnly || Number.class.isAssignableFrom(column.getType()))) {
+    		if(!CyIdentifiable.SUID.equals(column.getName()) && (node || Number.class.isAssignableFrom(column.getType()))) {
     			attributes.add(column.getName());
     		}
     	}

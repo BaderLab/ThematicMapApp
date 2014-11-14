@@ -19,6 +19,7 @@ import org.cytoscape.model.CyNetworkFactory;
 import org.cytoscape.model.CyNetworkManager;
 import org.cytoscape.model.CyNode;
 import org.cytoscape.model.CyRow;
+import org.cytoscape.model.subnetwork.CySubNetwork;
 import org.cytoscape.view.layout.CyLayoutAlgorithm;
 import org.cytoscape.view.layout.CyLayoutAlgorithmManager;
 import org.cytoscape.view.model.CyNetworkView;
@@ -180,122 +181,77 @@ public class ThematicMap {
 		return thematicMapNetwork;
 	}
 
-//    public void getSingleNodes(CyNetwork inputNetwork, CyNetwork thematicMap, String attName, Set<CyNode> single_nodes, Set<CyEdge> single_node_edges) {
-//        Set<CyNode> unassigned_nodes = new HashSet<CyNode>();
-//        Set<CyEdge> unassigned_edges = new HashSet<CyEdge>();
-//
-//        // find unassigned nodes from the original network
-//        for(CyNode orig_node : inputNetwork.getNodeList()) {
-//
-//            Collection<?> themeAttVals = TMUtil.getAttValues(inputNetwork, orig_node, attName);
-//            if (themeAttVals.isEmpty()) {
-//                //System.out.println("unassigned node: " + orig_node.toString());
-//                unassigned_nodes.add(orig_node);
-//            }
-//
-//        }
-//
-//        // MKTODO not sure about the below loop, needs test
-//        // create nodes in thematic map for each of the unassigned nodes in the original network
-//        for (CyNode unassignedNode : unassigned_nodes) {
-//            ((CySubNetwork)thematicMap).addNode(unassignedNode);
-//            thematicMap.getRow(unassignedNode).set(TM.theme_member_count_att_name.name, 1);
-//            
-//            //add the input node to the theme node's member node list
-//		    TMUtil.addToListAttribute(thematicMap.getRow(unassignedNode), TM.memberListAttName.name, unassignedNode.getSUID().toString());
-//        }
-//
-//
-//        // find edges connecting unassigned nodes
-//        for(CyEdge orig_edge : inputNetwork.getEdgeList()) {
-//            String interact = inputNetwork.getRow(orig_edge).get(CyEdge.INTERACTION, String.class);
-//            CyNode source = orig_edge.getSource();
-//            CyNode target = orig_edge.getTarget();
-//
-//            // NOT SURE ABOUT THIS OPTION
-//            if (unassigned_nodes.contains(source) && unassigned_nodes.contains(target)) {
-//            	
-//            	CyEdge themeNodeEdge = TMUtil.getCyEdge(inputNetwork, source, target, CyEdge.INTERACTION, interact + "_tt");
-//                // if the edge does not exist, create it
-//                if (themeNodeEdge == null) {
-//                    themeNodeEdge = inputNetwork.addEdge(source, target, false);
-//                    CyRow row = inputNetwork.getRow(themeNodeEdge);
-//                    row.set(TM.edgeStatisticAttName.name, 0.0);
-//                    row.set(TM.edgeSourceMemberCountAttName.name, 1);
-//                    row.set(TM.edgeStatisticTypeAttName.name, "COUNT");
-//                    //recording the input edge's source and target nodes as an attribute of the theme edge
-//
-//                } else {
-//                    // get current count
-//                    CyRow row = inputNetwork.getRow(themeNodeEdge);
-//                    int count = row.get(TM.edgeSourceMemberCountAttName.name, Integer.class);
-//                    row.set(TM.edgeSourceMemberCountAttName.name, count + 1);
-//                }
-//                String themeEdgeAttributeVal = source.getSUID().toString() + "-" + target.getSUID().toString();
-//                TMUtil.addToListAttribute(inputNetwork.getRow(themeNodeEdge), TM.edgeSourceAttName.name, themeEdgeAttributeVal);
-//                ((CySubNetwork)thematicMap).addEdge(themeNodeEdge);
-//
-//                //unassigned_edges.add(orig_edge);
-//            }
-//            else if (unassigned_nodes.contains(source)) {
-//                Collection<?> themeAttVals = TMUtil.getAttValues(inputNetwork, target, attName);
-//                for (Object themeAttVal : themeAttVals) {
-//                    CyNode themeAttNode = themeNameToThemeNode.get(themeAttVal);
-//                    CyEdge themeNodeEdge = TMUtil.getCyEdge(inputNetwork, source, themeAttNode, CyEdge.INTERACTION, interact + "_tt");
-//                    
-//                    // if the edge does not exist, create it
-//                    if (themeNodeEdge == null) {
-//                    	themeNodeEdge = inputNetwork.addEdge(source, themeAttNode, false);
-//                        CyRow row = inputNetwork.getRow(themeNodeEdge);
-//                        row.set(TM.edgeStatisticAttName, 0.0);
-//                        row.set(TM.edgeSourceMemberCountAttName, 1);
-//                        row.set(TM.edgeStatisticTypeAttName, "COUNT");
-//                        //recording the input edge's source and target nodes as an attribute of the theme edge
-//
-//                    }
-//                    else {
-//                        // get current count
-//                    	CyRow row = inputNetwork.getRow(themeNodeEdge);
-//                        int count = row.get(TM.edgeSourceMemberCountAttName, Integer.class);
-//                        row.set(TM.edgeSourceMemberCountAttName, count + 1);
-//                    }
-//                    String themeEdgeAttributeVal = source.getSUID().toString() + "-" + target.getSUID().toString();
-//                    TMUtil.addToListAttribute(inputNetwork.getRow(themeNodeEdge), TM.edgeSourceAttName, themeEdgeAttributeVal);
-//                    ((CySubNetwork)thematicMap).addEdge(themeNodeEdge);
-//                }
-//
-//
-//            }
-//            else if (unassigned_nodes.contains(target)) {
-//                 Collection<?> themeAttVals = TMUtil.getAttValues(inputNetwork, source, attName);
-//                 for (Object themeAttVal:themeAttVals) {
-//                     CyNode themeAttNode = themeNameToThemeNode.get(themeAttVal);
-//                     CyEdge themeNodeEdge = TMUtil.getCyEdge(inputNetwork, themeAttNode, target, CyEdge.INTERACTION, interact + "_tt");
-//                     
-//                     // if the edge does not exist, create it
-//                     if (themeNodeEdge == null) {
-//                         themeNodeEdge = inputNetwork.addEdge(themeAttNode, target, false);
-//                         CyRow row = inputNetwork.getRow(themeNodeEdge);
-//                         row.set(TM.edgeStatisticAttName, 0.0);
-//                         row.set(TM.edgeSourceMemberCountAttName, 1);
-//                         row.set(TM.edgeStatisticTypeAttName, "COUNT");
-//                         
-//                     }
-//                     else {
-//                         // get current count
-//                         CyRow row = inputNetwork.getRow(themeNodeEdge);
-//                         int count = row.get(TM.edgeSourceMemberCountAttName, Integer.class);
-//                         row.set(TM.edgeSourceMemberCountAttName, count + 1);
-//                     }
-//                     String themeEdgeAttributeVal = source.getSUID().toString() + "-" + target.getSUID().toString();
-//                     TMUtil.addToListAttribute(inputNetwork.getRow(themeNodeEdge), TM.edgeSourceAttName, themeEdgeAttributeVal);
-//                     ((CySubNetwork)thematicMap).addEdge(themeNodeEdge);
-//                 }
-//            }
-//
-//        }
-//    }
+	
+    public void getSingleNodes(CyNetwork inputNetwork, CyNetwork thematicMap, String attName) {
+        Map<CyNode,CyNode> originalNodeToNewNode = new HashMap<CyNode,CyNode>();
 
+        // find nodes that don't have a value for the attribute
+        for(CyNode originalNode : inputNetwork.getNodeList()) {
+            Collection<?> themeAttVals = TMUtil.getAttValues(inputNetwork, originalNode, attName);
+            if (themeAttVals.isEmpty()) {
+            	// create a new node in the thematic map
+                CyNode newNode = ((CySubNetwork)thematicMap).addNode();
+                thematicMap.getRow(newNode).set(TM.theme_member_count_att_name.name, 1);
+                //add the input node to the theme node's member node list
+    		    TMUtil.addToListAttribute(thematicMap.getRow(newNode), TM.memberListAttName.name, originalNode.getSUID().toString());
+    		    originalNodeToNewNode.put(originalNode, newNode);
+            }
+        }
+
+        // find edges connecting unassigned nodes
+        for(CyEdge orig_edge : inputNetwork.getEdgeList()) {
+            String interact = inputNetwork.getRow(orig_edge).get(CyEdge.INTERACTION, String.class);
+            CyNode source = orig_edge.getSource();
+            CyNode target = orig_edge.getTarget();
+
+            if (originalNodeToNewNode.containsKey(source) && originalNodeToNewNode.containsKey(target)) {
+            	CyNode themeSource = originalNodeToNewNode.get(source);
+            	CyNode themeTarget = originalNodeToNewNode.get(target);
+            	createSingleNodeEdge(inputNetwork, source, target, thematicMap, themeSource, themeTarget, interact);
+            }
+            else if (originalNodeToNewNode.containsKey(source)) {
+            	CyNode themeSource = originalNodeToNewNode.get(source);
+                Collection<?> themeAttVals = TMUtil.getAttValues(inputNetwork, target, attName);
+                for (Object themeAttVal : themeAttVals) {
+                	CyNode themeAttNode = themeNameToThemeNode.get(themeAttVal);
+                	createSingleNodeEdge(inputNetwork, source, target, thematicMap, themeSource, themeAttNode, interact);
+                }
+            }
+            else if (originalNodeToNewNode.containsKey(target)) {
+            	CyNode themeTarget = originalNodeToNewNode.get(target);
+                Collection<?> themeAttVals = TMUtil.getAttValues(inputNetwork, source, attName);
+                for (Object themeAttVal : themeAttVals) {
+                    CyNode themeAttNode = themeNameToThemeNode.get(themeAttVal);
+                    createSingleNodeEdge(inputNetwork, source, target, thematicMap, themeAttNode, themeTarget, interact);
+                }
+            }
+        }
+    }
+
+    
+    
+    private void createSingleNodeEdge(CyNetwork inputNetwork, CyNode source, CyNode target, CyNetwork thematicMap, CyNode themeSource, CyNode themeTarget, String interact) {
+        CyEdge themeNodeEdge = TMUtil.getCyEdge(thematicMap, themeSource, themeTarget, CyEdge.INTERACTION, interact + "_tt");
+        // if the edge does not exist, create it
+        if (themeNodeEdge == null) {
+            themeNodeEdge = thematicMap.addEdge(themeSource, themeTarget, false);
+            CyRow row = thematicMap.getRow(themeNodeEdge);
+            row.set(TM.edgeStatisticAttName.name, 0.0);
+            row.set(TM.edgeSourceMemberCountAttName.name, 1);
+            row.set(TM.edgeStatisticTypeAttName.name, "COUNT");
+        }
+        else {
+            // get current count
+            CyRow row = thematicMap.getRow(themeNodeEdge);
+            int count = row.get(TM.edgeSourceMemberCountAttName.name, Integer.class);
+            row.set(TM.edgeSourceMemberCountAttName.name, count + 1);
+        }
+        String themeEdgeAttributeVal = source.getSUID().toString() + "-" + target.getSUID().toString();
+        TMUtil.addToListAttribute(thematicMap.getRow(themeNodeEdge), TM.edgeSourceAttName.name, themeEdgeAttributeVal);
+    }
+    
+    
+    
     /**Assigns the input graph node to the given theme node in the theme network, creating a new theme node in the theme network if one does
 	 * not already exist
 	 *
@@ -309,8 +265,6 @@ public class ThematicMap {
             return;
         }
         if (!themeNameToThemeNode.containsKey(themeName)) {
-			//no theme node exists for this theme type, so create it first and add it to the map
-			//thema.addNode(new Node(null, type));
 			
 			CyNode themeNode = themeNetwork.addNode();
 			themeNetwork.getRow(themeNode).set(CyNetwork.NAME, themeName.toString());
@@ -419,16 +373,6 @@ public class ThematicMap {
 	public CyNetworkView createThematicMapDefaultView(CyNetwork thema,String themeAttributeName, int edgeWidthType) {
 		//finally, generate the graph view
 		CyNetworkView themaView = networkViewFactory.createNetworkView(thema);
-
-
-//		if (!vmm.getCalculatorCatalog().getVisualStyleNames().contains(themeMapVisualStyle)) {
-//            //vmm.getCalculatorCatalog().addVisualStyle(new ThemeMapVisualStyle(vmm.getVisualStyle(),themeMapVisualStyle));
-//            VisualStyle vs = createThemeMapVisualStyle(vmm.getVisualStyle(), thema, edgeWidthType);
-//            vmm.getCalculatorCatalog().addVisualStyle(vs);
-//        }
-//		vmm.setVisualStyle(themeMapVisualStyle);
-//		
-//		themaView.redrawGraph(false, false);
 		
 		VisualStyle visualStyle = null;
 		for(VisualStyle existingStyle : visualMappingManager.getAllVisualStyles()) {
@@ -444,14 +388,6 @@ public class ThematicMap {
 
 		visualMappingManager.setVisualStyle(visualStyle, themaView);
 		
-		//HierarchicalLayoutListener hll = new HierarchicalLayoutListener();
-//        AttributeCircleLayout all = new AttributeCircleLayout(true);
-//        all.setLayoutAttribute(themeAttributeName);
-
-//        TaskManager.executeTask( new LayoutTask(all, Cytoscape.getCurrentNetworkView()),
-//			                         LayoutTask.getDefaultTaskConfig() );
-
-		
 		CyLayoutAlgorithm layout = layoutAlgorithmManager.getLayout("attribute-circle");
 		if(layout == null)
 			layout = layoutAlgorithmManager.getDefaultLayout();
@@ -459,20 +395,6 @@ public class ThematicMap {
         TaskIterator taskIterator = layout.createTaskIterator(themaView, layout.getDefaultLayoutContext(), CyLayoutAlgorithm.ALL_NODE_VIEWS, themeAttributeName);
         taskManager.execute(taskIterator);
         
-
-        //AttributeCircleLayout all = new AttributeCircleLayout(thema,Cytoscape.getNodeAttributes(),themeAttributeName);
-		//all.layout();
-//		themaView.redrawGraph(true, false);
-		//hll will execute the layout algorithm on the currently selected view, which should be our newly created one
-		//hll.actionPerformed(null);
-
-		// prototype code for using a mapping to determine the size of the nodes, as opposed to hardcoding the nodesizecalculator, which is how it is currently done
-//		double defaultSize = 10.0;
-//		ContinuousMapping sizeMapping = new ContinuousMapping(defaultSize,ObjectMapping.NODE_MAPPING);
-//		sizeMapping.setControllingAttributeName(TM.theme_member_count_att_name, thema, true);
-//		VisualStyle themaVS = new ThemeMapVisualStyle(vmm.getVisualStyle(),"ThemeMapVS");
-		//themaVS.getNodeAppearanceCalculator().getNodeShapeCalculator().
-
 		themaView.updateView();
 		networkViewManager.addNetworkView(themaView);
 		
@@ -481,7 +403,6 @@ public class ThematicMap {
 
 
 	private VisualStyle createThemeMapVisualStyle(CyNetwork network, int edgeWidthType) {
-
         // Loop through the nodes in the network to find the max and min member counts
         int maxMemberCount = Integer.MIN_VALUE;
         int minMemberCount = Integer.MAX_VALUE;
@@ -571,8 +492,6 @@ public class ThematicMap {
 	}
 
 	
-	
-
 
     private String formatName(String name) {
         int curLength = 0;
