@@ -132,7 +132,7 @@ public class ThematicMap {
             Collection<?> themeAttVals = TMUtil.getAttValues(inputNetwork, node, themeAttributeName);
             for(Object themeAttVal : themeAttVals) {
                 //add the input node to the set of member nodes belonging to the theme, creating a new theme node if one does not already exist
-				assignNodeToTheme(node, themeAttVal, themeNameToThemeNode, thematicMapNetwork);
+				assignNodeToTheme(inputNetwork, node, themeAttVal, themeNameToThemeNode, thematicMapNetwork);
 
 				//map the input node to this theme
 				addThemeToNodeThemeSet(inputNodeIDToThemes, node, themeAttVal);
@@ -198,7 +198,8 @@ public class ThematicMap {
                 CyNode newNode = ((CySubNetwork)thematicMap).addNode();
                 thematicMap.getRow(newNode).set(TM.theme_member_count_att_name.name, 1);
                 //add the input node to the theme node's member node list
-    		    TMUtil.addToListAttribute(thematicMap.getRow(newNode), TM.memberListAttName.name, originalNode.getSUID().toString());
+                String name = inputNetwork.getRow(originalNode).get(CyNetwork.NAME, String.class);
+    		    TMUtil.addToListAttribute(thematicMap.getRow(newNode), TM.memberListAttName.name, name);
     		    originalNodeToNewNode.put(originalNode, newNode);
             }
         }
@@ -239,7 +240,6 @@ public class ThematicMap {
         CyEdge themeNodeEdge = TMUtil.getCyEdge(thematicMap, themeSource, themeTarget, CyEdge.INTERACTION, interact + "_tt");
         // if the edge does not exist, create it
         if (themeNodeEdge == null) {
-        	System.out.println("create single edge: " + themeSource.getSUID() + " - " + themeTarget.getSUID());
             themeNodeEdge = thematicMap.addEdge(themeSource, themeTarget, false);
             CyRow row = thematicMap.getRow(themeNodeEdge);
             row.set(TM.edgeStatisticAttName.name, 0.0);
@@ -253,7 +253,7 @@ public class ThematicMap {
             int count = row.get(TM.edgeSourceMemberCountAttName.name, Integer.class);
             row.set(TM.edgeSourceMemberCountAttName.name, count + 1);
         }
-        String themeEdgeAttributeVal = source.getSUID().toString() + "-" + target.getSUID().toString();
+        String themeEdgeAttributeVal = edgeAttVal(inputNetwork, source, target);
         TMUtil.addToListAttribute(thematicMap.getRow(themeNodeEdge), TM.edgeSourceAttName.name, themeEdgeAttributeVal);
     }
     
@@ -267,7 +267,7 @@ public class ThematicMap {
 	 * @param themeNameToThemeNode the map from theme names to corresponding theme nodes in the thematic network
 	 * @param themeNetwork the thematic network
 	 */
-    private void assignNodeToTheme(CyNode inputNode, Object themeName, Map<Object,CyNode> themeNameToThemeNode, CyNetwork themeNetwork) {
+    private void assignNodeToTheme(CyNetwork inputNetwork, CyNode inputNode, Object themeName, Map<Object,CyNode> themeNameToThemeNode, CyNetwork themeNetwork) {
         if (themeName==null) {
             return;
         }
@@ -286,7 +286,8 @@ public class ThematicMap {
 		CyNode themeNode = themeNameToThemeNode.get(themeName);
 
 		//add the input node to the theme node's member node list
-		TMUtil.addToListAttribute(themeNetwork.getRow(themeNode), TM.memberListAttName.name, inputNode.getSUID().toString());
+		String name = inputNetwork.getRow(inputNode).get(CyNetwork.NAME, String.class);
+		TMUtil.addToListAttribute(themeNetwork.getRow(themeNode), TM.memberListAttName.name, name);
 
 	}
 
@@ -339,7 +340,7 @@ public class ThematicMap {
 	                }
 	
 	                //recording the input edge's source and target nodes as an attribute of the theme edge
-	                String themeEdgeAttributeVal = source.getSUID().toString() + "-" + target.getSUID().toString();
+	                String themeEdgeAttributeVal = edgeAttVal(inputNetwork, source, target);
 	                TMUtil.addToListAttribute(thematicGraph.getRow(themeEdge), TM.edgeSourceAttName.name, themeEdgeAttributeVal);
 	
 	                // add the input edge weight to the list of weights (if applicable)
@@ -380,6 +381,12 @@ public class ThematicMap {
 		themeSet.add(theme);
 	}
 
+	private String edgeAttVal(CyNetwork network, CyNode source, CyNode target) {
+		String sourceName = network.getRow(source).get(CyNetwork.NAME, String.class);
+		String targetName = network.getRow(target).get(CyNetwork.NAME, String.class);
+		return sourceName + "-" + targetName;
+	}
+	
 	public CyNetworkView createThematicMapDefaultView(CyNetwork thema,String themeAttributeName, int edgeWidthType) {
 		//finally, generate the graph view
 		CyNetworkView themaView = networkViewFactory.createNetworkView(thema);

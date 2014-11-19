@@ -127,6 +127,7 @@ public class CalcZScoreThread implements Runnable {
             }
             catch (IOException e) {
                 System.out.println("Problem writing to file....");
+                e.printStackTrace();
             }
             
 

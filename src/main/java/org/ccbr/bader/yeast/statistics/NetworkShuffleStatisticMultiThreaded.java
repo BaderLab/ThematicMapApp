@@ -90,7 +90,7 @@ public class NetworkShuffleStatisticMultiThreaded {
             CyNode sourceNode = edge.getSource();
             CyNode targetNode = edge.getTarget();
             
-            String edgeType = themeNetwork.getRow(edge).get(CyEdge.INTERACTION, String.class);
+            String edgeType = originalNetwork.getRow(edge).get(CyEdge.INTERACTION, String.class);
 
             sourceList.add(sourceNode);
             targetList.add(targetNode);
@@ -196,11 +196,13 @@ public class NetworkShuffleStatisticMultiThreaded {
             int targetIndex = -1;
 
             // loop through list of all attributes to find index of source and target attributes
-            for (int attIndex=0; attIndex<numAttributes; attIndex++) {
-                if (allAttValuesList.get(attIndex).toString().equals(source.getSUID().toString())) {
+            for (int attIndex = 0; attIndex < numAttributes; attIndex++) {
+            	String sourceName = themeNetwork.getRow(source).get(CyNetwork.NAME, String.class);
+                if (allAttValuesList.get(attIndex).toString().equals(sourceName)) {
                     sourceIndex = attIndex;
                 }
-                if (allAttValuesList.get(attIndex).toString().equals(target.getSUID().toString())) {
+                String targetName = themeNetwork.getRow(target).get(CyNetwork.NAME, String.class);
+                if (allAttValuesList.get(attIndex).toString().equals(targetName)) {
                     targetIndex = attIndex;
                 }
 

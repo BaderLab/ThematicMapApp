@@ -64,6 +64,7 @@ public class CreateThematicMapDialog extends JDialog {
 
 	private JRadioButton countRadio;
 	private JRadioButton statisticsRadio;
+	private JRadioButton noneRadio;
 	private JRadioButton hyperRadio;
 	private JRadioButton culmRadio;
 	private JRadioButton shuffRadio;
@@ -80,7 +81,7 @@ public class CreateThematicMapDialog extends JDialog {
 	
 	private File evaluateFile = null;
 	
-	private Set<Component> statisticsEnablement = new HashSet<Component>();
+//	private Set<Component> statisticsEnablement = new HashSet<Component>();
 	private Set<Component> shuffleEnablement = new HashSet<Component>();
 	private Set<Component> evaluateEnablement = new HashSet<Component>();
 	
@@ -201,11 +202,12 @@ public class CreateThematicMapDialog extends JDialog {
 		label.setAlignmentX(Component.LEFT_ALIGNMENT);
 		radioPanel.add(label);
 		
+		noneRadio  = new JRadioButton("None");
 		hyperRadio = new JRadioButton("Hypergeometric Probability");
 		culmRadio  = new JRadioButton("Hypergeometric Probability (Cumulative)");
 		shuffRadio = new JRadioButton("Shuffle"); 
 		
-		groupButtons(hyperRadio, culmRadio, shuffRadio);
+		groupButtons(noneRadio, hyperRadio, culmRadio, shuffRadio);
 		
 		ActionListener radioListener = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -213,10 +215,12 @@ public class CreateThematicMapDialog extends JDialog {
 			}
 		};
 		
+		noneRadio.addActionListener(radioListener);
 		hyperRadio.addActionListener(radioListener);
 		culmRadio.addActionListener(radioListener);
 		shuffRadio.addActionListener(radioListener);
 		
+		radioPanel.add(noneRadio);
 		radioPanel.add(hyperRadio);
 		radioPanel.add(culmRadio);
 		radioPanel.add(shuffRadio);
@@ -226,7 +230,7 @@ public class CreateThematicMapDialog extends JDialog {
 		JPanel shufflePanel = createShufflePanel();
 		statisticsPanel.add(shufflePanel, BorderLayout.CENTER);
 		
-		Collections.addAll(statisticsEnablement, label, hyperRadio, culmRadio, shuffRadio);
+//		Collections.addAll(statisticsEnablement, label, noneRadio, hyperRadio, culmRadio, shuffRadio);
 		
 		return statisticsPanel;
 	}
@@ -399,19 +403,20 @@ public class CreateThematicMapDialog extends JDialog {
 			return;
 		}
 		
-		ThematicMap tmap = thematicMapProvider.get(); // instantiate ThematicMap object using injector
-		
-		String attributeName = (String)attributeCombo.getSelectedItem();
-        String weightAttributeName = (String)weightCombo.getSelectedItem();
-        if(!NONE.equals(weightAttributeName)) {
-        	tmap.setEdgeWeightAttributeName(weightAttributeName);
-        }
-        tmap.setAllowSelfEdges(!removeSelfEdges.isSelected());
-        
-        CyNetwork inputNetwork = applicationManager.getCurrentNetwork();
-        CyNetwork thematicMap = tmap.createThematicMap(inputNetwork, attributeName); // running on the UI thread, tsk tsk
-        
-        if(statisticsRadio.isSelected()) {
+		try {
+			ThematicMap tmap = thematicMapProvider.get(); // instantiate ThematicMap object using injector
+			
+			String attributeName = (String)attributeCombo.getSelectedItem();
+	        String weightAttributeName = (String)weightCombo.getSelectedItem();
+	        if(!NONE.equals(weightAttributeName)) {
+	        	tmap.setEdgeWeightAttributeName(weightAttributeName);
+	        }
+	        tmap.setAllowSelfEdges(!removeSelfEdges.isSelected());
+	        
+	        CyNetwork inputNetwork = applicationManager.getCurrentNetwork();
+	        CyNetwork thematicMap = tmap.createThematicMap(inputNetwork, attributeName); // running on the UI thread, tsk tsk
+
+	        // statistics
         	if(hyperRadio.isSelected()) {
         		HyperGeomProbabilityStatistic stat = statisticFactory.createHyperGeomProbabilityStatistic(inputNetwork, thematicMap);
         		stat.getStatistics(attributeName, false);
@@ -430,32 +435,36 @@ public class CreateThematicMapDialog extends JDialog {
                 NetworkShuffleStatisticMultiThreaded statThreaded = statisticFactory.createNetworkShuffleStatisticMultiThreaded(inputNetwork, thematicMap);
                 statThreaded.getStatistics(attributeName, shuffleIterations, allFlagValues, evaluateFile);
         	}
-        }
-        
-        if (singleNodesCheck.isSelected()) {
-        	tmap.getSingleNodes(inputNetwork, thematicMap, attributeName);
-        }
-        
-        int edgeWidthType = statisticsRadio.isSelected() ?  ThematicMap.EDGE_WIDTH_STATISTICS : ThematicMap.EDGE_WIDTH_COUNT;
-        tmap.createThematicMapDefaultView(thematicMap, attributeName, edgeWidthType);
 
-        dispose();
+	        if (singleNodesCheck.isSelected()) {
+	        	tmap.getSingleNodes(inputNetwork, thematicMap, attributeName);
+	        }
+	        
+	        int edgeWidthType = statisticsRadio.isSelected() ?  ThematicMap.EDGE_WIDTH_STATISTICS : ThematicMap.EDGE_WIDTH_COUNT;
+	        tmap.createThematicMapDefaultView(thematicMap, attributeName, edgeWidthType);
+		}
+		finally {
+			dispose();
+		}
 	}
 	
 	
 	private void updateEnablement() {
-		setEnabled(statisticsEnablement, false);
 		setEnabled(shuffleEnablement, false);
 		setEnabled(evaluateEnablement, false);
 		
-		if(statisticsRadio.isSelected()) {
-			setEnabled(statisticsEnablement, true);
-			if(shuffRadio.isSelected()) {
-				setEnabled(shuffleEnablement, true);
-				if(evaluateCheck.isSelected()) {
-					setEnabled(evaluateEnablement, true);
-				}
+		if(shuffRadio.isSelected()) {
+			setEnabled(shuffleEnablement, true);
+			if(evaluateCheck.isSelected()) {
+				setEnabled(evaluateEnablement, true);
 			}
+		}
+		
+		if(noneRadio.isSelected()) {
+			countRadio.setSelected(true);
+			statisticsRadio.setEnabled(false);
+		} else {
+			statisticsRadio.setEnabled(true);
 		}
 	}
 	

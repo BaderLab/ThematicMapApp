@@ -218,6 +218,7 @@ public class NetworkShuffleStatistic {
                 fw.close();               
             }
             catch (IOException e) {
+            	e.printStackTrace();
                 System.out.println("Problem writing to file....");
             }
         }

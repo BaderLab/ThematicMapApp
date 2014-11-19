@@ -41,8 +41,10 @@ public class HyperGeomProbabilityStatistic {
             CyNode themeSource = themeMapEdge.getSource();
             CyNode themeTarget = themeMapEdge.getTarget();
 
-            Long att1 = themeSource.getSUID(); //getIdentifier();
-            Long att2 = themeTarget.getSUID(); //getIdentifier();
+            String att1 = themeNetwork.getRow(themeSource).get(CyNetwork.NAME, String.class);
+            String att2 = themeNetwork.getRow(themeTarget).get(CyNetwork.NAME, String.class);
+//            Long att1 = themeSource.getSUID(); //getIdentifier();
+//            Long att2 = themeTarget.getSUID(); //getIdentifier();
 
             //byte attType = TMUtil.getNodeAttType(attName);
 
@@ -101,7 +103,7 @@ public class HyperGeomProbabilityStatistic {
             int att1att2Edges = 0;
 
             for(CyEdge edge : originalNetwork.getEdgeList()) {
-            	String edgeType = themeNetwork.getRow(edge).get(CyEdge.INTERACTION, String.class);
+            	String edgeType = originalNetwork.getRow(edge).get(CyEdge.INTERACTION, String.class);
                 if (!edgeType.equals(originalEdgeType)) {
                     continue;
                 }
@@ -184,7 +186,7 @@ public class HyperGeomProbabilityStatistic {
             }
             double roundedVal = (Math.round(probability*100))/100.0;
 
-            themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticTypeAttName.name, roundedVal);
+            themeNetwork.getRow(themeMapEdge).set(TM.edgeStatisticAttName.name, roundedVal);
         }
 
     }
@@ -201,7 +203,7 @@ public class HyperGeomProbabilityStatistic {
      * @param N    number of possible edges
      * @return double with result of calculations.
      */
-    public double calculateCumulativeHypergDistr(int x, int m, int k, int N) {
+    private static double calculateCumulativeHypergDistr(int x, int m, int k, int N) {
         //double dist = calculateHypergDistr(att1att2Edges,totalEdges,possibleAtt1Att2Edges,possibleEdges);
 
         if (N >= 2) {
@@ -233,7 +235,7 @@ public class HyperGeomProbabilityStatistic {
             return 1.0;
         }
     }
-    public double calculateHypergDistr(int x, int m, int k, int N) {
+    private static double calculateHypergDistr(int x, int m, int k, int N) {
         //double dist = calculateHypergDistr(att1att2Edges,totalEdges,possibleAtt1Att2Edges,possibleEdges);
 
         double prob = 0.0;
