@@ -11,8 +11,9 @@ public class ColorGenerator {
 	private Random random = null;
 	
 	public ColorGenerator() {
-		Collections.addAll(baseColors, Color.BLUE, Color.RED, Color.YELLOW, Color.ORANGE, Color.GREEN, 
-				                       Color.MAGENTA, Color.CYAN, Color.PINK, Color.BLACK, Color.GRAY);
+		Collections.addAll(baseColors, 
+			Color.BLUE, Color.RED, Color.YELLOW, Color.ORANGE, Color.GREEN, 
+           	Color.MAGENTA, Color.CYAN, Color.PINK, Color.BLACK, Color.GRAY);
 	}
 	
 	

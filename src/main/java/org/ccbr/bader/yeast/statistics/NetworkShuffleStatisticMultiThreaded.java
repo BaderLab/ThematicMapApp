@@ -43,7 +43,7 @@ public class NetworkShuffleStatisticMultiThreaded {
         this.themeNetwork = themeNetwork;
     }
 
-    public void getStatistics(String attName, int trials, int[] evaluateFlags, File shuffleDirectory) {
+    public void getStatistics(String attName, int trials, List<Integer> evaluateFlags, File shuffleDirectory) {
 
         this.attName = attName;
         this.trials = trials;

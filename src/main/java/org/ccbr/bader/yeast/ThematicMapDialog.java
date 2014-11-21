@@ -16,9 +16,11 @@ import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -568,7 +570,12 @@ public class ThematicMapDialog extends JDialog implements PropertyChangeListener
                             //stat.getStatisticsProgressBar(attName, shuffleIterations, allFlagValues, evaluateShuffleFile);
 
                             NetworkShuffleStatisticMultiThreaded statThreaded = new NetworkShuffleStatisticMultiThreaded(inputNetwork, thematicMap);
-                            statThreaded.getStatistics(attName, shuffleIterations, allFlagValues, evaluateShuffleFile);
+                            
+                            List<Integer> values = new ArrayList<Integer>();
+                            for(int x : allFlagValues) {
+                            	values.add(x);
+                            }
+                            statThreaded.getStatistics(attName, shuffleIterations, values, evaluateShuffleFile);
                             long timeAfter = System.currentTimeMillis();
 
                             //System.out.println("time elapsed: " + (timeAfter-timeBefore)/1000.0);

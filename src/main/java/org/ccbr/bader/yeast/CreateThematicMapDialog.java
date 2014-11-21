@@ -10,10 +10,12 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -36,16 +38,14 @@ import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
-import org.ccbr.bader.yeast.statistics.HyperGeomProbabilityStatistic;
-import org.ccbr.bader.yeast.statistics.NetworkShuffleStatisticMultiThreaded;
-import org.ccbr.bader.yeast.statistics.StatisticFactory;
 import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CySwingApplication;
 import org.cytoscape.model.CyColumn;
 import org.cytoscape.model.CyIdentifiable;
 import org.cytoscape.model.CyNetwork;
 import org.cytoscape.model.CyTable;
-import org.cytoscape.view.model.CyNetworkViewManager;
+import org.cytoscape.work.TaskIterator;
+import org.cytoscape.work.swing.DialogTaskManager;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -57,9 +57,8 @@ public class CreateThematicMapDialog extends JDialog {
 	private final String NONE = "[None]";
 	
 	@Inject private CyApplicationManager applicationManager;
-	@Inject private CyNetworkViewManager networkViewManager;
-	@Inject private Provider<ThematicMap> thematicMapProvider;
-	@Inject private StatisticFactory statisticFactory;
+	@Inject private Provider<ThematicMapTask> thematicMapTaskProvider;
+	@Inject private DialogTaskManager taskManager;
 	
 
 	private JRadioButton countRadio;
@@ -80,8 +79,8 @@ public class CreateThematicMapDialog extends JDialog {
 	private JTextField iterationsText;
 	
 	private File evaluateFile = null;
+	private String networkName;
 	
-//	private Set<Component> statisticsEnablement = new HashSet<Component>();
 	private Set<Component> shuffleEnablement = new HashSet<Component>();
 	private Set<Component> evaluateEnablement = new HashSet<Component>();
 	
@@ -91,7 +90,7 @@ public class CreateThematicMapDialog extends JDialog {
 	public CreateThematicMapDialog(CySwingApplication application, CyApplicationManager applicationManager) {
 		super(application.getJFrame(), true);
 		CyNetwork inputNetwork = applicationManager.getCurrentNetwork();
-		String networkName = inputNetwork.getRow(inputNetwork).get(CyNetwork.NAME, String.class);
+		this.networkName = inputNetwork.getRow(inputNetwork).get(CyNetwork.NAME, String.class);
 		setTitle("Create Thematic Map: " + networkName);
 		this.applicationManager = applicationManager;
 		createContents();
@@ -230,8 +229,6 @@ public class CreateThematicMapDialog extends JDialog {
 		JPanel shufflePanel = createShufflePanel();
 		statisticsPanel.add(shufflePanel, BorderLayout.CENTER);
 		
-//		Collections.addAll(statisticsEnablement, label, noneRadio, hyperRadio, culmRadio, shuffRadio);
-		
 		return statisticsPanel;
 	}
 	
@@ -295,8 +292,8 @@ public class CreateThematicMapDialog extends JDialog {
 			}
 		});
 		
-		Collections.addAll(shuffleEnablement, label, iterationsText, evaluateCheck);
-		Collections.addAll(evaluateEnablement, evaluateText, saveLabel);
+		Collections.<Component>addAll(shuffleEnablement, label, iterationsText, evaluateCheck);
+		Collections.<Component>addAll(evaluateEnablement, evaluateText, saveLabel);
 		
 		return shufflePanel;
 	}
@@ -323,7 +320,7 @@ public class CreateThematicMapDialog extends JDialog {
 			}
 		});
 		
-		Collections.addAll(evaluateEnablement, directoryText, browseButton);
+		Collections.<Component>addAll(evaluateEnablement, directoryText, browseButton);
 		
 		return browsePanel;
 	}
@@ -359,14 +356,14 @@ public class CreateThematicMapDialog extends JDialog {
 	
 	
 	
-	private int[] getShuffleFlagValues() {
+	private List<Integer> getShuffleFlagValues() {
 		try {
 			String[] allFlags = evaluateText.getText().split(",");
-	        int[] allFlagValues = new int[allFlags.length];
-	        for(int i=0; i < allFlags.length; i++) {
-	            allFlagValues[i] = Integer.parseInt(allFlags[i]);
+	        List<Integer> allFlagValues = new ArrayList<Integer>(allFlags.length);
+	        for(String flag : allFlags) {
+	            allFlagValues.add(Integer.parseInt(flag));
 	        }
-	        return allFlagValues.length == 0 ? null : allFlagValues;
+	        return allFlagValues.isEmpty() ? null : allFlagValues;
 		} catch(NumberFormatException e) {
 			return null;
 		}
@@ -402,46 +399,36 @@ public class CreateThematicMapDialog extends JDialog {
 		if(!validateAndShowErrors()) {
 			return;
 		}
-		
 		try {
-			ThematicMap tmap = thematicMapProvider.get(); // instantiate ThematicMap object using injector
+			ThematicMapTask task = thematicMapTaskProvider.get();
 			
-			String attributeName = (String)attributeCombo.getSelectedItem();
-	        String weightAttributeName = (String)weightCombo.getSelectedItem();
+			task.setNetworkName(networkName);
+			task.setAttributeName((String)attributeCombo.getSelectedItem());
+			String weightAttributeName = (String)weightCombo.getSelectedItem();
 	        if(!NONE.equals(weightAttributeName)) {
-	        	tmap.setEdgeWeightAttributeName(weightAttributeName);
+	        	task.setWeightAttributeName(weightAttributeName);
 	        }
-	        tmap.setAllowSelfEdges(!removeSelfEdges.isSelected());
-	        
-	        CyNetwork inputNetwork = applicationManager.getCurrentNetwork();
-	        CyNetwork thematicMap = tmap.createThematicMap(inputNetwork, attributeName); // running on the UI thread, tsk tsk
-
-	        // statistics
-        	if(hyperRadio.isSelected()) {
-        		HyperGeomProbabilityStatistic stat = statisticFactory.createHyperGeomProbabilityStatistic(inputNetwork, thematicMap);
-        		stat.getStatistics(attributeName, false);
-        	}
-        	else if(culmRadio.isSelected()) {
-        		HyperGeomProbabilityStatistic stat = statisticFactory.createHyperGeomProbabilityStatistic(inputNetwork, thematicMap);
-        		stat.getStatistics(attributeName, true);
-        	}
-        	else if(shuffRadio.isSelected()) {
-        		int[] allFlagValues = null;
+			
+	        if(hyperRadio.isSelected()) {
+	        	task.setStatistic(ThematicMapTask.StatisticType.HYPER);
+	        }
+	        else if(culmRadio.isSelected()) {
+	        	task.setStatistic(ThematicMapTask.StatisticType.HYPER_CULM);
+	        }
+	        else if(shuffRadio.isSelected()) {
+	        	List<Integer> allFlagValues = null;
         		if(evaluateCheck.isSelected()) {
 	                allFlagValues = getShuffleFlagValues();
         		}
         		int shuffleIterations = Integer.parseInt(iterationsText.getText());
-        		
-                NetworkShuffleStatisticMultiThreaded statThreaded = statisticFactory.createNetworkShuffleStatisticMultiThreaded(inputNetwork, thematicMap);
-                statThreaded.getStatistics(attributeName, shuffleIterations, allFlagValues, evaluateFile);
-        	}
-
-	        if (singleNodesCheck.isSelected()) {
-	        	tmap.getSingleNodes(inputNetwork, thematicMap, attributeName);
+        		task.setShuffleStatistic(allFlagValues, shuffleIterations, evaluateFile);
 	        }
 	        
-	        int edgeWidthType = statisticsRadio.isSelected() ?  ThematicMap.EDGE_WIDTH_STATISTICS : ThematicMap.EDGE_WIDTH_COUNT;
-	        tmap.createThematicMapDefaultView(thematicMap, attributeName, edgeWidthType);
+	        task.setSingleNodes(singleNodesCheck.isSelected());
+	        task.setRemoveSelfEdges(removeSelfEdges.isSelected());
+	        task.setEdgeWidthType(statisticsRadio.isSelected() ?  ThematicMapTask.EdgeWidthType.STATISTICS : ThematicMapTask.EdgeWidthType.COUNT);
+	        
+	        taskManager.execute(new TaskIterator(task));
 		}
 		finally {
 			dispose();
