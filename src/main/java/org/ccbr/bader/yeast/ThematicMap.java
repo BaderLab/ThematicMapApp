@@ -404,10 +404,8 @@ public class ThematicMap {
 		}
 
 		visualMappingManager.setVisualStyle(visualStyle, themaView);
-		
-		CyLayoutAlgorithm layout = layoutAlgorithmManager.getLayout("attribute-circle");
-		if(layout == null)
-			layout = layoutAlgorithmManager.getDefaultLayout();
+
+		CyLayoutAlgorithm layout = getLayoutAlgorithm();
 		
         TaskIterator taskIterator = layout.createTaskIterator(themaView, layout.getDefaultLayoutContext(), CyLayoutAlgorithm.ALL_NODE_VIEWS, themeAttributeName);
         taskManager.execute(taskIterator);
@@ -418,7 +416,17 @@ public class ThematicMap {
 		return themaView;
 	}
 
-
+	
+	private CyLayoutAlgorithm getLayoutAlgorithm() 	{
+		CyLayoutAlgorithm layout = layoutAlgorithmManager.getLayout("force-directed");
+		if(layout == null)
+			layout = layoutAlgorithmManager.getLayout("attribute-circle");
+		if(layout == null)
+			layout = layoutAlgorithmManager.getDefaultLayout();
+		return layout;
+	}
+	
+	
 	private VisualStyle createThemeMapVisualStyle(CyNetwork network, int edgeWidthType) {
         // Loop through the nodes in the network to find the max and min member counts
         int maxMemberCount = Integer.MIN_VALUE;
